@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/auth';
 import { useTheme, typography, spacing, radius } from '../../src/theme/ThemeProvider';
-import { Button } from '../../src/components/Button';
 import { signOut } from '../../src/services/auth';
+
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function Profile() {
   const { theme } = useTheme();
@@ -24,7 +26,7 @@ export default function Profile() {
         <View style={styles.headerRow}>
           <Text style={[typography.h1, { color: theme.textPrimary }]}>Profile</Text>
           <Pressable onPress={() => router.push('/account-settings' as never)} hitSlop={8}>
-            <Text style={[styles.gear, { color: theme.textSecondary }]}>⚙</Text>
+            <Ionicons name="settings-outline" size={26} color={theme.textSecondary} />
           </Pressable>
         </View>
 
@@ -52,17 +54,20 @@ export default function Profile() {
           </View>
 
           {profile?.isVerified ? (
-            <View style={[styles.verified, { borderColor: theme.primary }]}>
-              <Text style={[styles.verifiedText, { color: theme.primary }]}>✓ Verified</Text>
+            <View style={[styles.verified, { borderColor: theme.primary, flexDirection: 'row', gap: 6 }]}>
+              <Ionicons name="checkmark-circle" size={16} color={theme.primary} />
+              <Text style={[styles.verifiedText, { color: theme.primary }]}>Verified</Text>
             </View>
           ) : (
             <Pressable
               onPress={() => router.push('/kyc' as never)}
-              style={[styles.verified, { borderColor: theme.secondary }]}
+              style={[styles.verified, { borderColor: theme.secondary, flexDirection: 'row', gap: 6 }]}
             >
+              <Ionicons name="shield-half-outline" size={16} color={theme.secondary} />
               <Text style={[styles.verifiedText, { color: theme.secondary }]}>
-                Verify your identity →
+                Verify your identity
               </Text>
+              <Ionicons name="chevron-forward" size={14} color={theme.secondary} />
             </Pressable>
           )}
         </View>
@@ -98,37 +103,37 @@ export default function Profile() {
           <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
             Personal Information
           </Text>
-          <Row label="Phone" value={profile?.phone} icon="📞" />
-          <Row label="Address" value={profile?.address} icon="🏠" />
-          <Row label="Birthday" value={profile?.birthday} icon="🎂" />
-          <Row label="Occupation" value={profile?.occupation} icon="💼" />
+          <Row label="Phone" value={profile?.phone} icon="call-outline" />
+          <Row label="Address" value={profile?.address} icon="home-outline" />
+          <Row label="Birthday" value={profile?.birthday} icon="gift-outline" />
+          <Row label="Occupation" value={profile?.occupation} icon="briefcase-outline" />
         </View>
 
         <View style={{ height: spacing.lg }} />
 
         <MenuItem
           label="Analytics"
-          icon="📊"
+          icon="bar-chart-outline"
           onPress={() => router.push('/analytics' as never)}
         />
         <MenuItem
           label="Transaction History"
-          icon="🕒"
+          icon="time-outline"
           onPress={() => router.push('/transactions' as never)}
         />
         <MenuItem
           label="Agreements"
-          icon="📄"
+          icon="document-text-outline"
           onPress={() => router.push('/agreements' as never)}
         />
         <MenuItem
           label="KYC Verification"
-          icon="🛡"
+          icon="shield-checkmark-outline"
           onPress={() => router.push('/kyc' as never)}
         />
         <MenuItem
           label="Help & Support"
-          icon="❓"
+          icon="help-circle-outline"
           onPress={() => router.push('/help' as never)}
         />
 
@@ -145,8 +150,11 @@ export default function Profile() {
             },
           ]}
         >
-          <Text style={[styles.logoutText, { color: theme.danger }]}>↩ Logout</Text>
-          <Text style={[styles.chevron, { color: theme.danger }]}>›</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+            <Ionicons name="log-out-outline" size={22} color={theme.danger} />
+            <Text style={[styles.logoutText, { color: theme.danger }]}>Logout</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.danger} />
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -159,7 +167,7 @@ function MenuItem({
   onPress,
 }: {
   label: string;
-  icon: string;
+  icon: IoniconsName;
   onPress: () => void;
 }) {
   const { theme } = useTheme();
@@ -176,19 +184,37 @@ function MenuItem({
       ]}
     >
       <View style={styles.menuLeft}>
-        <Text style={{ marginRight: spacing.md, fontSize: 18 }}>{icon}</Text>
+        <Ionicons
+          name={icon}
+          size={22}
+          color={theme.primary}
+          style={{ marginRight: spacing.md }}
+        />
         <Text style={[typography.bodyBold, { color: theme.textPrimary }]}>{label}</Text>
       </View>
-      <Text style={[styles.chevron, { color: theme.textMuted }]}>›</Text>
+      <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
     </Pressable>
   );
 }
 
-function Row({ label, value, icon }: { label: string; value?: string; icon: string }) {
+function Row({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value?: string;
+  icon: IoniconsName;
+}) {
   const { theme } = useTheme();
   return (
     <View style={styles.rowItem}>
-      <Text style={{ marginRight: spacing.md, fontSize: 16 }}>{icon}</Text>
+      <Ionicons
+        name={icon}
+        size={18}
+        color={theme.textSecondary}
+        style={{ marginRight: spacing.md }}
+      />
       <View style={{ flex: 1 }}>
         <Text style={[typography.label, { color: theme.textMuted }]}>{label}</Text>
         <Text style={[typography.body, { color: theme.textPrimary, marginTop: 2 }]}>

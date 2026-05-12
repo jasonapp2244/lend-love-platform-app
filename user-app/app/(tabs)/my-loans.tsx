@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { TabBar } from '../../src/components/TabBar';
 import { LoanCard } from '../../src/components/LoanCard';
@@ -90,10 +91,11 @@ export default function MyLoans() {
         onPress={() => router.push('/create-loan' as never)}
         style={({ pressed }) => [
           styles.fab,
-          { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1 },
+          { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1, flexDirection: 'row', gap: 6 },
         ]}
       >
-        <Text style={styles.fabText}>＋ Create Loan</Text>
+        <Ionicons name="add" size={20} color="#0D0D0D" />
+        <Text style={styles.fabText}>Create Loan</Text>
       </Pressable>
     </SafeAreaView>
   );

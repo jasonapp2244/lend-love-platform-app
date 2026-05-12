@@ -11,7 +11,7 @@ import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProv
 import { Button } from '../../src/components/Button';
 import { Badge } from '../../src/components/Badge';
 import { formatMoney, formatDate } from '../../src/utils/format';
-import type { LoanRequest } from '@lendlove/shared';
+import type { LoanRequest } from '../../src/shared';
 
 export default function RequestDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

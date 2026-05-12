@@ -22,7 +22,7 @@ import {
   type LoanType,
   type CreateLoanInput,
   type CreateLoanRequestInput,
-} from '@lendlove/shared';
+} from '../../src/shared';
 
 // ---- Marketplace queries ----
 

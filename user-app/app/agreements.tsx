@@ -23,7 +23,7 @@ import { useTheme, spacing, radius, typography } from '../src/theme/ThemeProvide
 import { EmptyState } from '../src/components/EmptyState';
 import { Badge } from '../src/components/Badge';
 import { formatMoney, formatDate } from '../src/utils/format';
-import type { Agreement } from '@lendlove/shared';
+import type { Agreement } from '../src/shared';
 
 export default function Agreements() {
   const router = useRouter();

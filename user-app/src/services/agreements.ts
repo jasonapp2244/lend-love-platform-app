@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
-import type { Agreement, Loan, MoneyLoan } from '@lendlove/shared';
+import type { Agreement, Loan, MoneyLoan } from '../../src/shared';
 
 interface DraftInput {
   loan: MoneyLoan;

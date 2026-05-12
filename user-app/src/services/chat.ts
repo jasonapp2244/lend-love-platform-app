@@ -21,7 +21,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Conversation, Message } from '@lendlove/shared';
+import type { Conversation, Message } from '../../src/shared';
 
 /**
  * Stable conversation ID derived from sorted participant UIDs (+ optional loanId).

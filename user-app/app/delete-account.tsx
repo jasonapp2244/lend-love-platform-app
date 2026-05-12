@@ -15,7 +15,7 @@ import { Input } from '../src/components/Input';
 import { Button } from '../src/components/Button';
 import { useAuthStore } from '../src/store/auth';
 import { deleteAccount } from '../src/services/users';
-import { DeleteAccountSchema, DELETE_ACCOUNT_URL } from '@lendlove/shared';
+import { DeleteAccountSchema, DELETE_ACCOUNT_URL } from '../src/shared';
 
 export default function DeleteAccount() {
   const router = useRouter();

@@ -2,11 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/auth';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { HeartLogo } from '../../src/components/HeartLogo';
 import { LoanCard } from '../../src/components/LoanCard';
 import { useMyLending, useMyBorrowing } from '../../src/hooks/useMarketplace';
+
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function Home() {
   const { profile, uid } = useAuthStore();
@@ -15,10 +18,7 @@ export default function Home() {
   const lending = useMyLending(uid);
   const borrowing = useMyBorrowing(uid);
 
-  const activeLoans = [
-    ...(lending.data ?? []),
-    ...(borrowing.data ?? []),
-  ]
+  const activeLoans = [...(lending.data ?? []), ...(borrowing.data ?? [])]
     .filter((l) => l.status === 'active' || l.status === 'published')
     .slice(0, 3);
 
@@ -27,10 +27,12 @@ export default function Home() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <View style={styles.logoRow}>
-            <HeartLogo size={28} />
+            <HeartLogo size={32} />
             <Text style={[styles.brand, { color: theme.textPrimary }]}>Lend Love™</Text>
           </View>
-          <Text style={[styles.bell, { color: theme.textSecondary }]}>🔔</Text>
+          <Pressable hitSlop={8}>
+            <Ionicons name="notifications-outline" size={24} color={theme.textPrimary} />
+          </Pressable>
         </View>
 
         <Text style={[styles.welcome, { color: theme.textSecondary }]}>Welcome back,</Text>
@@ -40,21 +42,21 @@ export default function Home() {
 
         <View style={styles.statsRow}>
           <StatCard
-            icon="✓"
+            icon="checkmark-circle"
             value={profile?.completedLoans ?? 0}
             label="Completed"
             tint={theme.successTint}
             color={theme.primary}
           />
           <StatCard
-            icon="★"
+            icon="star"
             value={profile?.rating ? profile.rating.toFixed(1) : '–'}
             label="Rating"
             tint={theme.warningTint}
             color={theme.secondary}
           />
           <StatCard
-            icon="⚠"
+            icon="warning"
             value={profile?.overdueLoans ?? 0}
             label="Overdue"
             tint={theme.dangerTint}
@@ -66,14 +68,14 @@ export default function Home() {
         <View style={styles.quickRow}>
           <ActionCard
             label="Create Loan"
-            icon="⊕"
+            icon="add-circle"
             tint={theme.successTint}
             color={theme.primary}
             onPress={() => router.push('/create-loan' as never)}
           />
           <ActionCard
             label="Request Loan"
-            icon="📄"
+            icon="document-text"
             tint={theme.warningTint}
             color={theme.secondary}
             onPress={() => router.push('/request-loan' as never)}
@@ -95,10 +97,7 @@ export default function Home() {
             ]}
           >
             <Text
-              style={[
-                typography.body,
-                { color: theme.textSecondary, textAlign: 'center' },
-              ]}
+              style={[typography.body, { color: theme.textSecondary, textAlign: 'center' }]}
             >
               No active loans yet. Create or request one to get started.
             </Text>
@@ -128,7 +127,7 @@ function StatCard({
   tint,
   color,
 }: {
-  icon: string;
+  icon: IoniconsName;
   value: string | number;
   label: string;
   tint: string;
@@ -137,7 +136,7 @@ function StatCard({
   const { theme } = useTheme();
   return (
     <View style={[styles.stat, { backgroundColor: tint, borderColor: color }]}>
-      <Text style={[styles.statIcon, { color }]}>{icon}</Text>
+      <Ionicons name={icon} size={24} color={color} />
       <Text style={[styles.statValue, { color }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{label}</Text>
     </View>
@@ -152,7 +151,7 @@ function ActionCard({
   onPress,
 }: {
   label: string;
-  icon: string;
+  icon: IoniconsName;
   tint: string;
   color: string;
   onPress: () => void;
@@ -165,7 +164,7 @@ function ActionCard({
         { backgroundColor: tint, borderColor: color, opacity: pressed ? 0.85 : 1 },
       ]}
     >
-      <Text style={[styles.actionIcon, { color }]}>{icon}</Text>
+      <Ionicons name={icon} size={32} color={color} />
       <Text style={[styles.actionLabel, { color }]}>{label}</Text>
     </Pressable>
   );
@@ -181,7 +180,6 @@ const styles = StyleSheet.create({
   },
   logoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   brand: { ...typography.h3 },
-  bell: { fontSize: 18 },
   welcome: { ...typography.body },
   name: { ...typography.display, marginBottom: spacing.xl },
   statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl },
@@ -193,7 +191,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  statIcon: { fontSize: 22 },
   statValue: { ...typography.numeric },
   statLabel: { ...typography.label },
   section: { ...typography.h3 },
@@ -215,7 +212,6 @@ const styles = StyleSheet.create({
     minHeight: 110,
     justifyContent: 'center',
   },
-  actionIcon: { fontSize: 28 },
   actionLabel: { ...typography.bodyBold },
   placeholder: {
     borderRadius: radius.lg,

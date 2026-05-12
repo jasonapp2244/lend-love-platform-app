@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTheme, spacing, radius, typography } from '../theme/ThemeProvider';
 import { Badge } from './Badge';
 import { formatMoney, formatDate } from '../utils/format';
-import type { LoanRequest } from '@lendlove/shared';
+import type { LoanRequest } from '../../src/shared';
 
 interface Props {
   request: LoanRequest;

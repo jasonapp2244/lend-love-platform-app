@@ -21,7 +21,7 @@ import {
 } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
-import type { KycSubmission } from '@lendlove/shared';
+import type { KycSubmission } from '../../src/shared';
 
 export type KycDocType = 'id' | 'selfie' | 'address';
 

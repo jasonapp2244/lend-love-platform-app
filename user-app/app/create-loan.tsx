@@ -30,7 +30,7 @@ import {
   PLATFORM_DEFAULTS,
   type CreateLoanInput,
   type InstallmentFrequency,
-} from '@lendlove/shared';
+} from '../src/shared';
 
 const DEFAULT_DUE_MS = Date.now() + 90 * 24 * 60 * 60 * 1000; // 90 days
 const DEFAULT_RETURN_MS = Date.now() + 14 * 24 * 60 * 60 * 1000; // 14 days

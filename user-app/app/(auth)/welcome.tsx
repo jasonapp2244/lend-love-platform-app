@@ -14,14 +14,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, spacing, typography } from '../../src/theme/ThemeProvider';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
-import { HeartLogo } from '../../src/components/HeartLogo';
+import { FullLogo } from '../../src/components/HeartLogo';
 import {
   signIn,
   signInAsGuestLoaner,
   signInAsGuestBorrower,
 } from '../../src/services/auth';
 import { seedDemoDataForUser } from '../../src/services/demo-seed';
-import { APP_TM } from '@lendlove/shared';
+import { APP_TM } from '../../src/shared';
 
 export default function Welcome() {
   const router = useRouter();
@@ -70,7 +70,7 @@ export default function Welcome() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.logo}>
-            <HeartLogo size={80} />
+            <FullLogo width={280} />
           </View>
 
           <Text style={[styles.title, { color: theme.textPrimary }]}>Welcome Back</Text>

@@ -15,7 +15,7 @@ import {
   UpdateProfileSchema,
   type UpdateProfileInput,
   type User,
-} from '@lendlove/shared';
+} from '../../src/shared';
 
 export async function updateProfile(uid: string, input: UpdateProfileInput): Promise<void> {
   const parsed = UpdateProfileSchema.parse(input);

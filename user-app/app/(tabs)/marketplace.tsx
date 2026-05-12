@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { TabBar } from '../../src/components/TabBar';
 import { LoanCard } from '../../src/components/LoanCard';
@@ -20,7 +21,7 @@ import {
   useMarketplaceLoans,
   useMarketplaceRequests,
 } from '../../src/hooks/useMarketplace';
-import type { Loan, LoanRequest } from '@lendlove/shared';
+import type { Loan, LoanRequest } from '../../src/shared';
 
 type Tab = 'money' | 'items' | 'requests';
 
@@ -74,9 +75,11 @@ export default function Marketplace() {
           }}
           hitSlop={8}
         >
-          <Text style={[styles.searchIcon, { color: theme.textPrimary }]}>
-            {searchOpen ? '✕' : '🔍'}
-          </Text>
+          <Ionicons
+            name={searchOpen ? 'close' : 'search'}
+            size={22}
+            color={theme.textPrimary}
+          />
         </Pressable>
       </View>
 
@@ -117,10 +120,11 @@ export default function Marketplace() {
             onPress={() => router.push('/request-loan' as never)}
             style={({ pressed }) => [
               styles.fab,
-              { backgroundColor: theme.secondary, opacity: pressed ? 0.85 : 1 },
+              { backgroundColor: theme.secondary, opacity: pressed ? 0.85 : 1, flexDirection: 'row', gap: 6 },
             ]}
           >
-            <Text style={styles.fabText}>＋ Post Request</Text>
+            <Ionicons name="add" size={20} color="#0D0D0D" />
+            <Text style={styles.fabText}>Post Request</Text>
           </Pressable>
         </>
       ) : null}

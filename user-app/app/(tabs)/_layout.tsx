@@ -1,11 +1,16 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
-const TabIcon = ({ glyph, color }: { glyph: string; color: string }) => (
-  <Text style={{ fontSize: 22, color }}>{glyph}</Text>
-);
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+function tabIcon(active: IoniconsName, inactive: IoniconsName) {
+  return ({ color, focused, size }: { color: string; focused: boolean; size: number }) => (
+    <Ionicons name={focused ? active : inactive} size={size} color={color} />
+  );
+}
 
 export default function TabsLayout() {
   const { theme } = useTheme();
@@ -18,46 +23,55 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.bgSurface,
           borderTopColor: theme.border,
-          height: 64,
-          paddingBottom: 8,
+          // Apple HIG: 49-50pt tab bar on iPhone, 56dp recommended on Android
+          height: Platform.OS === 'ios' ? 84 : 64,
           paddingTop: 6,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          borderTopWidth: 0.5,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          marginTop: 2,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
+        },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <TabIcon glyph="⌂" color={color} />,
+          tabBarIcon: tabIcon('home', 'home-outline'),
         }}
       />
       <Tabs.Screen
         name="marketplace"
         options={{
           title: 'Marketplace',
-          tabBarIcon: ({ color }) => <TabIcon glyph="◫" color={color} />,
+          tabBarIcon: tabIcon('storefront', 'storefront-outline'),
         }}
       />
       <Tabs.Screen
         name="my-loans"
         options={{
           title: 'My Loans',
-          tabBarIcon: ({ color }) => <TabIcon glyph="₪" color={color} />,
+          tabBarIcon: tabIcon('wallet', 'wallet-outline'),
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',
-          tabBarIcon: ({ color }) => <TabIcon glyph="✎" color={color} />,
+          tabBarIcon: tabIcon('chatbubble-ellipses', 'chatbubble-ellipses-outline'),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <TabIcon glyph="◉" color={color} />,
+          tabBarIcon: tabIcon('person-circle', 'person-circle-outline'),
         }}
       />
     </Tabs>

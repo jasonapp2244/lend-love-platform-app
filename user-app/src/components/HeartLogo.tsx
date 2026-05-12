@@ -1,37 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { Image, StyleSheet } from 'react-native';
 
 /**
- * Simple text-based heart for splash + welcome screens.
- * Will be replaced with the real SVG/PNG logo from `assets/` before submission.
+ * Lend Love™ brand mark (heart + $ on rounded green tile).
+ * Used in headers and the Welcome screen.
  */
 export function HeartLogo({ size = 64 }: { size?: number }) {
-  const { theme } = useTheme();
   return (
-    <View
-      style={[
-        styles.box,
-        {
-          width: size,
-          height: size,
-          backgroundColor: theme.primary,
-          borderRadius: size / 4,
-        },
-      ]}
-    >
-      <Text style={[styles.heart, { fontSize: size * 0.55 }]}>♥</Text>
-    </View>
+    <Image
+      source={require('../../assets/logo-mark.png')}
+      style={[styles.img, { width: size, height: size }]}
+      resizeMode="contain"
+    />
+  );
+}
+
+/**
+ * Full Lend Love™ wordmark — green "Lend" + gold "LOVE" with heart-$.
+ */
+export function FullLogo({ width = 280 }: { width?: number }) {
+  return (
+    <Image
+      source={require('../../assets/logo-full.png')}
+      style={{ width, height: width * (1310 / 1850) }}
+      resizeMode="contain"
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  box: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heart: {
-    color: '#0D0D0D',
-    fontWeight: '700',
+  img: {
+    alignSelf: 'center',
   },
 });

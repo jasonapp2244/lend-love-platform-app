@@ -20,7 +20,7 @@ import {
   sendMessage,
   counterpartyName,
 } from '../../src/services/chat';
-import type { Conversation, Message } from '@lendlove/shared';
+import type { Conversation, Message } from '../../src/shared';
 
 export default function ConversationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

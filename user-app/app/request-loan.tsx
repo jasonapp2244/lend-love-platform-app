@@ -21,7 +21,7 @@ import {
   CreateLoanRequestSchema,
   PLATFORM_DEFAULTS,
   type CreateLoanRequestInput,
-} from '@lendlove/shared';
+} from '../src/shared';
 
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 

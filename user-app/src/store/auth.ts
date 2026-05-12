@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User } from '@lendlove/shared';
+import type { User } from '../../src/shared';
 
 interface AuthState {
   uid: string | null;

@@ -1,4 +1,4 @@
-import { CURRENCY_SYMBOLS } from '@lendlove/shared';
+import { CURRENCY_SYMBOLS } from '../../src/shared';
 
 export function formatMoney(amount: number, currency = 'USD'): string {
   const symbol = CURRENCY_SYMBOLS[currency] ?? '$';

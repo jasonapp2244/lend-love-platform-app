@@ -5,7 +5,7 @@ import {
   fetchMyLending,
   fetchMyBorrowing,
 } from '../services/loans';
-import type { LoanType } from '@lendlove/shared';
+import type { LoanType } from '../../src/shared';
 
 export function useMarketplaceLoans(type: LoanType) {
   return useQuery({

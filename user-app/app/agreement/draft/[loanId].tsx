@@ -19,7 +19,7 @@ import { DateField } from '../../../src/components/DateField';
 import { useAuthStore } from '../../../src/store/auth';
 import { fetchLoan } from '../../../src/services/loans';
 import { createDraftAgreement } from '../../../src/services/agreements';
-import { COMPLIANCE } from '@lendlove/shared';
+import { COMPLIANCE } from '../../../src/shared';
 
 const DEFAULT_TERMS =
   'Both parties agree to the terms specified. Payment schedule must be respected.';

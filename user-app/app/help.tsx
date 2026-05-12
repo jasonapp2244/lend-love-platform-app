@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Linking, Pressable } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { useTheme, spacing, radius, typography } from '../src/theme/ThemeProvider';
-import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '@lendlove/shared';
+import { SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../src/shared';
 
 export default function Help() {
   const router = useRouter();

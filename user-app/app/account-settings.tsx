@@ -18,7 +18,7 @@ import { Toggle } from '../src/components/Toggle';
 import { useAuthStore } from '../src/store/auth';
 import { updateProfile } from '../src/services/users';
 import { getProfile } from '../src/services/auth';
-import { UpdateProfileSchema } from '@lendlove/shared';
+import { UpdateProfileSchema } from '../src/shared';
 
 export default function AccountSettings() {
   const router = useRouter();

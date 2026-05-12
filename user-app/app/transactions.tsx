@@ -15,7 +15,7 @@ import { useAuthStore } from '../src/store/auth';
 import { useTheme, spacing, radius, typography } from '../src/theme/ThemeProvider';
 import { EmptyState } from '../src/components/EmptyState';
 import { formatMoney, formatDate } from '../src/utils/format';
-import type { Transaction } from '@lendlove/shared';
+import type { Transaction } from '../src/shared';
 
 export default function Transactions() {
   const router = useRouter();

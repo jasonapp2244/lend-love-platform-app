@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useAuthStore } from '../../src/store/auth';
@@ -16,7 +17,7 @@ import {
   subscribeToConversations,
   counterpartyName,
 } from '../../src/services/chat';
-import type { Conversation } from '@lendlove/shared';
+import type { Conversation } from '../../src/shared';
 
 function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
@@ -51,7 +52,7 @@ export default function Chat() {
       <View style={styles.header}>
         <Text style={[typography.h1, { color: theme.textPrimary }]}>Messages</Text>
         <Pressable hitSlop={8}>
-          <Text style={{ color: theme.textSecondary, fontSize: 18 }}>🔍</Text>
+          <Ionicons name="search" size={22} color={theme.textSecondary} />
         </Pressable>
       </View>
 
@@ -76,7 +77,7 @@ export default function Chat() {
             ]}
           >
             <View style={[styles.avatar, { backgroundColor: theme.bgSurface, borderColor: theme.border }]}>
-              <Text style={[styles.avatarText, { color: theme.textSecondary }]}>👤</Text>
+              <Ionicons name="person" size={22} color={theme.textSecondary} />
             </View>
             <View style={styles.body}>
               <View style={styles.bodyTopRow}>
@@ -114,10 +115,11 @@ export default function Chat() {
         onPress={() => router.push('/(tabs)/marketplace')}
         style={({ pressed }) => [
           styles.fab,
-          { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1 },
+          { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1, flexDirection: 'row', gap: 6 },
         ]}
       >
-        <Text style={styles.fabText}>＋ New Chat</Text>
+        <Ionicons name="create" size={18} color="#0D0D0D" />
+        <Text style={styles.fabText}>New Chat</Text>
       </Pressable>
     </SafeAreaView>
   );
