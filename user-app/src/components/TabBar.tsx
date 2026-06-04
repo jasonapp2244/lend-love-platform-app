@@ -20,7 +20,14 @@ export function TabBar<T extends string>({ tabs, value, onChange }: Props<T>) {
       {tabs.map((t) => {
         const active = t.key === value;
         return (
-          <Pressable key={t.key} style={styles.tab} onPress={() => onChange(t.key)}>
+          <Pressable
+            key={t.key}
+            style={styles.tab}
+            onPress={() => onChange(t.key)}
+            accessibilityRole="tab"
+            accessibilityLabel={t.label}
+            accessibilityState={{ selected: active }}
+          >
             <Text
               style={[
                 styles.label,

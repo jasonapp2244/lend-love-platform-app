@@ -5,6 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeProvider';
+import { PlatformConfigProvider } from '../src/hooks/usePlatformConfig';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { OfflineBanner } from '../src/components/OfflineBanner';
 import { useAuthStore } from '../src/store/auth';
 import { onAuthChange, getProfile } from '../src/services/auth';
 
@@ -50,15 +53,20 @@ function RootNav() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <AuthListener />
-            <RootNav />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
+              <PlatformConfigProvider>
+                <OfflineBanner />
+                <AuthListener />
+                <RootNav />
+              </PlatformConfigProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }

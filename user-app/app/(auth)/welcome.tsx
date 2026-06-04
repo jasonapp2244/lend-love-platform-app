@@ -15,6 +15,8 @@ import { useTheme, spacing, typography } from '../../src/theme/ThemeProvider';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
 import { FullLogo } from '../../src/components/HeartLogo';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../src/services/firebase';
 import {
   signIn,
   signInAsGuestLoaner,
@@ -94,7 +96,21 @@ export default function Welcome() {
               onChangeText={setPassword}
             />
 
-            <Pressable style={styles.forgot}>
+            <Pressable
+              style={styles.forgot}
+              onPress={async () => {
+                if (!email.trim()) {
+                  Alert.alert('Enter your email', 'Type your email address above, then tap Forgot Password.');
+                  return;
+                }
+                try {
+                  await sendPasswordResetEmail(auth, email.trim());
+                  Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
+                } catch {
+                  Alert.alert('Email Sent', 'If an account exists with that email, a reset link has been sent.');
+                }
+              }}
+            >
               <Text style={[styles.forgotText, { color: theme.primary }]}>
                 Forgot Password?
               </Text>

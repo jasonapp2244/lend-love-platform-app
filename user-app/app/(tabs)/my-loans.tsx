@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { TabBar } from '../../src/components/TabBar';
+import { SkeletonCard } from '../../src/components/SkeletonCard';
 import { LoanCard } from '../../src/components/LoanCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useAuthStore } from '../../src/store/auth';
@@ -67,10 +68,7 @@ export default function MyLoans() {
         }
         ListEmptyComponent={
           active.isLoading ? (
-            <ActivityIndicator
-              style={{ marginTop: spacing.xxxl }}
-              color={theme.primary}
-            />
+            <View style={{ padding: spacing.xl }}><SkeletonCard count={3} /></View>
           ) : (
             <EmptyState
               icon="▢"

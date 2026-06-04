@@ -16,6 +16,7 @@ import { Input } from '../src/components/Input';
 import { Button } from '../src/components/Button';
 import { Toggle } from '../src/components/Toggle';
 import { useAuthStore } from '../src/store/auth';
+import { usePlatformConfig } from '../src/hooks/usePlatformConfig';
 import { updateProfile } from '../src/services/users';
 import { getProfile } from '../src/services/auth';
 import { UpdateProfileSchema } from '../src/shared';
@@ -24,6 +25,8 @@ export default function AccountSettings() {
   const router = useRouter();
   const { theme } = useTheme();
   const { uid, profile, setProfile } = useAuthStore();
+  const { flag } = usePlatformConfig();
+  const biometricEnabled = flag('mobile.biometricLogin');
 
   const [fullName, setFullName] = useState(profile?.fullName ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
@@ -139,15 +142,17 @@ export default function AccountSettings() {
             <Toggle value={notifications} onChange={setNotifications} />
           </View>
 
-          <View style={[styles.prefRow, { borderColor: theme.border }]}>
-            <View style={styles.prefBody}>
-              <Text style={{ color: theme.secondary, marginRight: spacing.md }}>🔒</Text>
-              <Text style={[typography.body, { color: theme.textPrimary }]}>
-                Enable biometrics (demo)
-              </Text>
+          {biometricEnabled && (
+            <View style={[styles.prefRow, { borderColor: theme.border }]}>
+              <View style={styles.prefBody}>
+                <Text style={{ color: theme.secondary, marginRight: spacing.md }}>🔒</Text>
+                <Text style={[typography.body, { color: theme.textPrimary }]}>
+                  Enable biometrics
+                </Text>
+              </View>
+              <Toggle value={biometrics} onChange={setBiometrics} />
             </View>
-            <Toggle value={biometrics} onChange={setBiometrics} />
-          </View>
+          )}
 
           <View style={{ height: spacing.xl }} />
           <Button

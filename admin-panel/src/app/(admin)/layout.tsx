@@ -2,24 +2,26 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRequireAdmin } from '@/lib/auth-context';
+import { useRequireAdmin, useAdminTierAccess } from '@/lib/auth-context';
 import { signOut } from '@/lib/auth';
 // All admin pages depend on client-side Firebase Auth; skip SSG.
 
 const NAV = [
-  { href: '/dashboard', label: 'Dashboard', icon: '◳' },
-  { href: '/users', label: 'Users', icon: '◉' },
-  { href: '/kyc', label: 'KYC Queue', icon: '🛡' },
-  { href: '/loans', label: 'Loans', icon: '$' },
-  { href: '/agreements', label: 'Agreements', icon: '📄' },
-  { href: '/reports', label: 'Reports', icon: '◫' },
-  { href: '/audit', label: 'Audit Log', icon: '✎' },
-  { href: '/config', label: 'Configuration', icon: '⚙' },
+  { href: '/dashboard', label: 'Dashboard', icon: '◳', tiers: ['super', 'operations', 'finance', 'support'] },
+  { href: '/users', label: 'Users', icon: '◉', tiers: ['super', 'operations', 'support'] },
+  { href: '/kyc', label: 'KYC Queue', icon: '🛡', tiers: ['super', 'operations', 'support'] },
+  { href: '/loans', label: 'Loans', icon: '$', tiers: ['super', 'operations', 'finance'] },
+  { href: '/agreements', label: 'Agreements', icon: '📄', tiers: ['super', 'operations', 'finance'] },
+  { href: '/reports', label: 'Reports', icon: '◫', tiers: ['super', 'finance'] },
+  { href: '/audit', label: 'Audit Log', icon: '✎', tiers: ['super'] },
+  { href: '/config', label: 'Configuration', icon: '⚙', tiers: ['super'] },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { uid, profile, loading } = useRequireAdmin();
+  const { allowed } = useAdminTierAccess();
+  const adminTier = profile?.adminTier ?? 'admin';
 
   if (loading || !uid) {
     return (
@@ -48,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 px-3 py-3 space-y-0.5 text-sm">
-          {NAV.map((n) => {
+          {NAV.filter((n) => n.tiers.includes(adminTier)).map((n) => {
             const active = pathname === n.href || pathname.startsWith(n.href + '/');
             return (
               <Link
@@ -90,7 +92,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       <main className="flex-1 overflow-x-hidden">
-        <div className="px-8 py-6 max-w-[1400px] mx-auto">{children}</div>
+        <div className="px-8 py-6 max-w-[1400px] mx-auto">
+          {allowed ? children : (
+            <div className="flex flex-col items-center justify-center py-32 text-center">
+              <div className="text-4xl mb-4">🔒</div>
+              <h2 className="text-xl font-bold text-white/80 mb-2">Access Restricted</h2>
+              <p className="text-white/50 max-w-md">
+                Your admin tier ({adminTier}) does not have permission to access this page.
+                Contact a super admin to request access.
+              </p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

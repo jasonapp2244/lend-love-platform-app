@@ -8,7 +8,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { PLATFORM_DEFAULTS } from '@lendlove/shared';
+import { fetchPlatformConfig } from './config-service';
 import type {
   User,
   Loan,
@@ -47,6 +47,7 @@ export interface ReportsOverview {
 export async function fetchReportsOverview(range: DateRange): Promise<ReportsOverview> {
   const _db = db();
   const start = rangeStart(range);
+  const platformConfig = await fetchPlatformConfig();
 
   const [usersSnap, loansSnap, agreementsSnap, txSnap, kycSnap] = await Promise.all([
     getDocs(query(collection(_db, 'users'), limit(500))),
@@ -116,8 +117,8 @@ export async function fetchReportsOverview(range: DateRange): Promise<ReportsOve
     transactions: { total: transactions.length, volume: txVolume },
     kyc: kycByStatus,
     revenue: {
-      gross: moneyValue * (PLATFORM_DEFAULTS.PLATFORM_FEE_PERCENT / 100),
-      feeRate: PLATFORM_DEFAULTS.PLATFORM_FEE_PERCENT,
+      gross: moneyValue * (platformConfig.feePercent / 100),
+      feeRate: platformConfig.feePercent,
     },
   };
 }

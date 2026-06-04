@@ -23,10 +23,11 @@ import { DateField } from '../src/components/DateField';
 import { Picker } from '../src/components/Picker';
 import { TypeToggle } from '../src/components/TypeToggle';
 import { useAuthStore } from '../src/store/auth';
+import { usePlatformConfig } from '../src/hooks/usePlatformConfig';
 import { createLoan } from '../src/services/loans';
+import { createMoneyLoanSchema } from '../src/services/dynamic-schemas';
 import {
-  CreateLoanSchema,
-  COMPLIANCE,
+  CreateItemLoanSchema,
   PLATFORM_DEFAULTS,
   type CreateLoanInput,
   type InstallmentFrequency,
@@ -38,9 +39,11 @@ const DEFAULT_RETURN_MS = Date.now() + 14 * 24 * 60 * 60 * 1000; // 14 days
 export default function CreateLoanScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { uid } = useAuthStore();
+  const { uid, profile } = useAuthStore();
+  const { config } = usePlatformConfig();
   const qc = useQueryClient();
 
+  const itemLoansEnabled = config.featureFlags['mobile.itemLoans'] !== false;
   const [type, setType] = useState<'money' | 'item'>('money');
 
   // Money fields
@@ -76,6 +79,24 @@ export default function CreateLoanScreen() {
   });
 
   const handlePublish = () => {
+    // Block if platform is in read-only maintenance mode
+    if (config.featureFlags['maintenance.readOnlyMode'] === true) {
+      Alert.alert('Maintenance', 'The platform is temporarily in read-only mode. Please try again later.');
+      return;
+    }
+    // Enforce KYC requirement if admin enabled it
+    const requireKyc = config.featureFlags['compliance.requireKycForLending'] === true;
+    if (requireKyc && profile && !profile.isVerified) {
+      Alert.alert(
+        'KYC Required',
+        'You must verify your identity before creating a loan.',
+        [
+          { text: 'Verify Now', onPress: () => router.push('/kyc' as never) },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+      return;
+    }
     try {
       const input: CreateLoanInput =
         type === 'money'
@@ -102,7 +123,11 @@ export default function CreateLoanScreen() {
               notes,
             };
 
-      const parsed = CreateLoanSchema.safeParse(input);
+      // Use dynamic schemas that read from admin config (not hardcoded constants)
+      const schema = type === 'money'
+        ? createMoneyLoanSchema(config)
+        : CreateItemLoanSchema;
+      const parsed = schema.safeParse(input);
       if (!parsed.success) {
         Alert.alert(
           'Check your inputs',
@@ -110,7 +135,7 @@ export default function CreateLoanScreen() {
         );
         return;
       }
-      mutation.mutate(parsed.data);
+      mutation.mutate(parsed.data as CreateLoanInput);
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Unexpected error');
     }
@@ -140,15 +165,19 @@ export default function CreateLoanScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={[styles.section, { color: theme.textPrimary }]}>Type</Text>
-          <TypeToggle
-            options={[
-              { value: 'money', label: 'Money', emoji: '💸' },
-              { value: 'item', label: 'Item', emoji: '📦' },
-            ]}
-            value={type}
-            onChange={(v) => setType(v as 'money' | 'item')}
-            activeColor={type === 'money' ? theme.secondary : theme.secondary}
-          />
+          {itemLoansEnabled ? (
+            <TypeToggle
+              options={[
+                { value: 'money', label: 'Money', emoji: '💸' },
+                { value: 'item', label: 'Item', emoji: '📦' },
+              ]}
+              value={type}
+              onChange={(v) => setType(v as 'money' | 'item')}
+              activeColor={type === 'money' ? theme.secondary : theme.secondary}
+            />
+          ) : (
+            <Text style={[typography.body, { color: theme.textSecondary }]}>Money Loan</Text>
+          )}
 
           <View style={{ height: spacing.xl }} />
 
@@ -202,7 +231,7 @@ export default function CreateLoanScreen() {
                 label="Due Date"
                 value={dueDate}
                 onChange={setDueDate}
-                minDate={new Date(Date.now() + COMPLIANCE.MIN_LOAN_TERM_DAYS * 24 * 60 * 60 * 1000)}
+                minDate={new Date(Date.now() + config.minLoanTermDays * 24 * 60 * 60 * 1000)}
               />
               <View style={styles.rowGap} />
               <Input

@@ -5,7 +5,9 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../src/services/firebase';
+import { doc as fsDoc, updateDoc } from 'firebase/firestore';
 import { openOrCreateConversation } from '../../src/services/chat';
+import { createLoan } from '../../src/services/loans';
 import { useAuthStore } from '../../src/store/auth';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { Button } from '../../src/components/Button';
@@ -76,7 +78,40 @@ export default function RequestDetail() {
             {req.collateral ? <Row label="Collateral" value={req.collateral} theme={theme} /> : null}
           </View>
 
-          <Button label="Offer this loan" variant="primary" fullWidth onPress={() => {}} />
+          <Button
+            label="Offer this loan"
+            variant="primary"
+            fullWidth
+            onPress={async () => {
+              if (!uid || !req) return;
+              if (uid === req.borrowerId) {
+                Alert.alert('Cannot offer', 'You cannot offer a loan to your own request.');
+                return;
+              }
+              try {
+                // Create a money loan pre-linked to this borrower
+                const loanId = await createLoan(uid, {
+                  type: 'money',
+                  amount: req.amount,
+                  currency: req.currency,
+                  interestRate: 0,
+                  installments: req.repaymentTermMonths,
+                  installmentFrequency: 'monthly',
+                  lateFeePerDay: 0,
+                  dueDate: req.neededByDate + req.repaymentTermMonths * 30 * 24 * 60 * 60 * 1000,
+                  description: `Offer for: ${req.purpose}`,
+                });
+                // Mark request as fulfilled
+                await updateDoc(fsDoc(db, 'loanRequests', req.id), { status: 'fulfilled' });
+                // Open chat with borrower
+                const convId = await openOrCreateConversation([uid, req.borrowerId], loanId);
+                Alert.alert('Loan Offered', 'Your loan offer has been created. Chat with the borrower to finalize terms.');
+                router.replace({ pathname: '/loan/[id]', params: { id: loanId } } as never);
+              } catch (e: any) {
+                Alert.alert('Could not offer', e?.message ?? 'Try again.');
+              }
+            }}
+          />
           <Button label="Message Borrower" variant="outline" fullWidth onPress={messageBorrower} />
         </ScrollView>
       )}

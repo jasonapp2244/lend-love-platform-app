@@ -31,6 +31,8 @@ export function Toggle({ value, onChange, disabled }: Props) {
       onPress={() => !disabled && onChange(!value)}
       disabled={disabled}
       hitSlop={8}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled }}
       style={{ opacity: disabled ? 0.5 : 1 }}
     >
       <Animated.View

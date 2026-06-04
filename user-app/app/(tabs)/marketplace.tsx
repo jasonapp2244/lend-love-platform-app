@@ -17,10 +17,12 @@ import { TabBar } from '../../src/components/TabBar';
 import { LoanCard } from '../../src/components/LoanCard';
 import { LoanRequestCard } from '../../src/components/LoanRequestCard';
 import { EmptyState } from '../../src/components/EmptyState';
+import { SkeletonCard } from '../../src/components/SkeletonCard';
 import {
   useMarketplaceLoans,
   useMarketplaceRequests,
 } from '../../src/hooks/useMarketplace';
+import { usePlatformConfig } from '../../src/hooks/usePlatformConfig';
 import type { Loan, LoanRequest } from '../../src/shared';
 
 type Tab = 'money' | 'items' | 'requests';
@@ -28,6 +30,9 @@ type Tab = 'money' | 'items' | 'requests';
 export default function Marketplace() {
   const { theme } = useTheme();
   const router = useRouter();
+  const { flag } = usePlatformConfig();
+  const itemLoansEnabled = flag('mobile.itemLoans');
+  const borrowerRequestsEnabled = flag('mobile.borrowerRequests');
   const [tab, setTab] = useState<Tab>('money');
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -39,7 +44,7 @@ export default function Marketplace() {
   const activeQuery = tab === 'money' ? moneyQ : tab === 'items' ? itemsQ : reqsQ;
 
   const filteredLoans = useMemo<Loan[]>(() => {
-    const data = (tab === 'money' ? moneyQ.data : itemsQ.data) ?? [];
+    const data = (tab === 'money' ? moneyQ.data : itemsQ.data) as Loan[] ?? [];
     if (!search.trim()) return data;
     const q = search.toLowerCase();
     return data.filter((l) => {
@@ -104,12 +109,12 @@ export default function Marketplace() {
       <TabBar
         tabs={[
           { key: 'money', label: 'Money' },
-          { key: 'items', label: 'Items' },
-          { key: 'requests', label: 'Requests' },
+          ...(itemLoansEnabled ? [{ key: 'items', label: 'Items' }] : []),
+          ...(borrowerRequestsEnabled ? [{ key: 'requests', label: 'Requests' }] : []),
         ]}
         value={tab}
         onChange={(k) => {
-          setTab(k);
+          setTab(k as Tab);
           setSearch('');
         }}
       />
@@ -152,7 +157,7 @@ export default function Marketplace() {
           }
           ListEmptyComponent={
             reqsQ.isLoading ? (
-              <ActivityIndicator style={{ marginTop: spacing.xxxl }} color={theme.primary} />
+              <View style={{ padding: spacing.xl }}><SkeletonCard count={3} /></View>
             ) : (
               <EmptyState
                 title="No requests yet"
@@ -182,9 +187,14 @@ export default function Marketplace() {
               tintColor={theme.primary}
             />
           }
+          onEndReached={() => {
+            if (tab === 'money' && moneyQ.hasNextPage && !moneyQ.isFetchingNextPage) moneyQ.fetchNextPage();
+            if (tab === 'items' && itemsQ.hasNextPage && !itemsQ.isFetchingNextPage) itemsQ.fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
           ListEmptyComponent={
             activeQuery.isLoading ? (
-              <ActivityIndicator style={{ marginTop: spacing.xxxl }} color={theme.primary} />
+              <View style={{ padding: spacing.xl }}><SkeletonCard count={4} /></View>
             ) : (
               <EmptyState
                 title={tab === 'money' ? 'No money loans available' : 'No items available'}

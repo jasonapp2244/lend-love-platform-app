@@ -4,13 +4,13 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyCP7tBukcECV5wJjyIN0ws4WUv9JJEJBJQ',
-  authDomain: 'lend-love.firebaseapp.com',
-  projectId: 'lend-love',
-  storageBucket: 'lend-love.firebasestorage.app',
-  messagingSenderId: '523440774704',
-  appId: '1:523440774704:web:91b5bf75348ec84e5e97f5',
-  measurementId: 'G-33CPMMF8Z6',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? '',
 };
 
 let _app: FirebaseApp | null = null;

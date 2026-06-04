@@ -28,6 +28,8 @@ export function Input({ label, error, leftIcon, rightIcon, style, ...rest }: Pro
         {leftIcon ? <View style={styles.icon}>{leftIcon}</View> : null}
         <TextInput
           placeholderTextColor={theme.textMuted}
+          accessibilityLabel={label ?? rest.placeholder}
+          accessibilityState={{ disabled: rest.editable === false }}
           {...rest}
           style={[styles.input, { color: theme.textPrimary }, style]}
         />

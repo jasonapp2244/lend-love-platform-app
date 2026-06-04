@@ -46,6 +46,12 @@ export function LoanCard({ loan, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={
+        loan.type === 'money'
+          ? `${statusLabel} money loan for ${formatMoney(loan.amount, loan.currency)}`
+          : `${statusLabel} item loan: ${loan.itemTitle}`
+      }
       style={({ pressed }) => [
         styles.card,
         {

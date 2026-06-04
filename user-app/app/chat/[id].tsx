@@ -14,12 +14,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { useAuthStore } from '../../src/store/auth';
+import { Alert } from 'react-native';
 import {
   fetchConversation,
   subscribeToMessages,
   sendMessage,
   counterpartyName,
 } from '../../src/services/chat';
+import { blockUser } from '../../src/services/moderation';
+import { ReportModal } from '../../src/components/ReportModal';
 import type { Conversation, Message } from '../../src/shared';
 
 export default function ConversationDetail() {
@@ -33,7 +36,10 @@ export default function ConversationDetail() {
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
+
+  const otherUserId = conv?.participantIds.find((p) => p !== uid) ?? '';
 
   useEffect(() => {
     if (!id) return;
@@ -78,8 +84,52 @@ export default function ConversationDetail() {
             </Text>
           ) : null}
         </View>
-        <View style={{ width: 24 }} />
+        <Pressable
+          onPress={() => {
+            Alert.alert(
+              'Options',
+              undefined,
+              [
+                {
+                  text: 'Report User',
+                  onPress: () => setReportVisible(true),
+                },
+                {
+                  text: 'Block User',
+                  style: 'destructive',
+                  onPress: () => {
+                    if (!uid || !otherUserId) return;
+                    Alert.alert('Block this user?', 'They will not be able to message you.', [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Block',
+                        style: 'destructive',
+                        onPress: async () => {
+                          await blockUser(uid, otherUserId);
+                          Alert.alert('Blocked', 'This user has been blocked.');
+                          router.back();
+                        },
+                      },
+                    ]);
+                  },
+                },
+                { text: 'Cancel', style: 'cancel' },
+              ],
+            );
+          }}
+          hitSlop={8}
+        >
+          <Text style={{ fontSize: 20, color: theme.textSecondary }}>...</Text>
+        </Pressable>
       </View>
+
+      <ReportModal
+        visible={reportVisible}
+        onClose={() => setReportVisible(false)}
+        contentType="message"
+        contentId={id ?? ''}
+        reportedUserId={otherUserId}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

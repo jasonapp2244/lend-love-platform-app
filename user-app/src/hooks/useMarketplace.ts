@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import {
   fetchMarketplaceLoans,
   fetchMarketplaceRequests,
@@ -8,10 +8,13 @@ import {
 import type { LoanType } from '../../src/shared';
 
 export function useMarketplaceLoans(type: LoanType) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['marketplace', 'loans', type],
-    queryFn: () => fetchMarketplaceLoans(type),
+    queryFn: ({ pageParam }) => fetchMarketplaceLoans(type, pageParam),
+    initialPageParam: null as any,
+    getNextPageParam: (last) => (last.hasMore ? last.lastDoc : undefined),
     staleTime: 30_000,
+    select: (data) => data.pages.flatMap((p) => p.items),
   });
 }
 

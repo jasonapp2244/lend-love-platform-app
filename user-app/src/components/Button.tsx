@@ -28,6 +28,9 @@ export function Button({ label, variant = 'primary', loading, icon, fullWidth, d
     <Pressable
       {...rest}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={({ pressed }) => [
         styles.btn,
         {

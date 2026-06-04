@@ -11,7 +11,9 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
   setDoc,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import {
@@ -24,18 +26,43 @@ import {
   type CreateLoanRequestInput,
 } from '../../src/shared';
 
+const PAGE_SIZE = 20;
+
 // ---- Marketplace queries ----
 
-export async function fetchMarketplaceLoans(type: LoanType): Promise<Loan[]> {
-  const q = query(
-    collection(db, 'loans'),
-    where('type', '==', type),
-    where('status', '==', 'published'),
-    orderBy('publishedAt', 'desc'),
-    limit(50)
-  );
+export interface PaginatedResult<T> {
+  items: T[];
+  lastDoc: QueryDocumentSnapshot | null;
+  hasMore: boolean;
+}
+
+export async function fetchMarketplaceLoans(
+  type: LoanType,
+  cursor?: QueryDocumentSnapshot | null,
+): Promise<PaginatedResult<Loan>> {
+  const q = cursor
+    ? query(
+        collection(db, 'loans'),
+        where('type', '==', type),
+        where('status', '==', 'published'),
+        orderBy('publishedAt', 'desc'),
+        startAfter(cursor),
+        limit(PAGE_SIZE),
+      )
+    : query(
+        collection(db, 'loans'),
+        where('type', '==', type),
+        where('status', '==', 'published'),
+        orderBy('publishedAt', 'desc'),
+        limit(PAGE_SIZE),
+      );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as Loan);
+  const items = snap.docs.map((d) => d.data() as Loan);
+  return {
+    items,
+    lastDoc: snap.docs[snap.docs.length - 1] ?? null,
+    hasMore: snap.docs.length === PAGE_SIZE,
+  };
 }
 
 export async function fetchMarketplaceRequests(): Promise<LoanRequest[]> {

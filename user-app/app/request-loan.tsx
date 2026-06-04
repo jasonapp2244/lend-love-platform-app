@@ -16,9 +16,10 @@ import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
 import { DateField } from '../src/components/DateField';
 import { useAuthStore } from '../src/store/auth';
+import { usePlatformConfig } from '../src/hooks/usePlatformConfig';
 import { createLoanRequest } from '../src/services/loans';
+import { createLoanRequestSchema } from '../src/services/dynamic-schemas';
 import {
-  CreateLoanRequestSchema,
   PLATFORM_DEFAULTS,
   type CreateLoanRequestInput,
 } from '../src/shared';
@@ -28,7 +29,8 @@ const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 export default function RequestLoanScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { uid } = useAuthStore();
+  const { uid, profile } = useAuthStore();
+  const { config } = usePlatformConfig();
   const qc = useQueryClient();
 
   const [amount, setAmount] = useState('');
@@ -51,6 +53,24 @@ export default function RequestLoanScreen() {
   });
 
   const handleSubmit = () => {
+    // Block if platform is in read-only maintenance mode
+    if (config.featureFlags['maintenance.readOnlyMode'] === true) {
+      Alert.alert('Maintenance', 'The platform is temporarily in read-only mode. Please try again later.');
+      return;
+    }
+    // Enforce KYC requirement if admin enabled it
+    const requireKyc = config.featureFlags['compliance.requireKycForBorrowing'] === true;
+    if (requireKyc && profile && !profile.isVerified) {
+      Alert.alert(
+        'KYC Required',
+        'You must verify your identity before requesting a loan.',
+        [
+          { text: 'Verify Now', onPress: () => router.push('/kyc' as never) },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+      return;
+    }
     const input: CreateLoanRequestInput = {
       amount: Number(amount),
       currency: PLATFORM_DEFAULTS.CURRENCY,
@@ -59,7 +79,7 @@ export default function RequestLoanScreen() {
       repaymentTermMonths: parseInt(termMonths, 10) || 0,
       collateral: collateral.trim() || undefined,
     };
-    const parsed = CreateLoanRequestSchema.safeParse(input);
+    const parsed = createLoanRequestSchema(config).safeParse(input);
     if (!parsed.success) {
       Alert.alert(
         'Check your inputs',

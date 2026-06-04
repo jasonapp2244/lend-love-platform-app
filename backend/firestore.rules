@@ -12,8 +12,6 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == uid;
     }
 
-    // Demo mode: also check Firestore user doc since custom claims need Blaze.
-    // Production: relies on the `role` custom claim (set by Cloud Function).
     function isAdmin() {
       return isAuthed() && (
         request.auth.token.role == 'admin' ||
@@ -22,31 +20,61 @@ service cloud.firestore {
       );
     }
 
-    function isDemoUser() {
-      return isAuthed() && request.auth.token.demo == true;
+    function isDemoMode() {
+      return !exists(/databases/$(database)/documents/config/platform)
+        || get(/databases/$(database)/documents/config/platform).data.get('featureFlags', {}).get('integrations.paykings.enabled', false) == false;
     }
 
-    function isVerified() {
-      return isAuthed() && (request.auth.token.kycVerified == true || isDemoUser());
-    }
+    function isString(val) { return val is string; }
+    function isNumber(val) { return val is number || val is int; }
+    function isBool(val) { return val is bool; }
 
     // ====== Users ======
     match /users/{uid} {
-      allow read: if isOwner(uid) || isAdmin() || isAuthed();
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid) || isAdmin();
+      allow read: if isAuthed();
+      allow create: if isOwner(uid)
+                    && isString(request.resource.data.email)
+                    && isString(request.resource.data.fullName)
+                    && request.resource.data.fullName.size() >= 1
+                    && request.resource.data.fullName.size() <= 100;
+      allow update: if (isOwner(uid) || isAdmin())
+                    && (!('role' in request.resource.data) || isAdmin()); // only admin can change role
       allow delete: if isOwner(uid) || isAdmin();
     }
 
     // ====== Loans ======
     match /loans/{loanId} {
       allow read: if isAuthed();
+
       allow create: if isAuthed()
-                    && request.resource.data.loanerId == request.auth.uid;
+                    && request.resource.data.loanerId == request.auth.uid
+                    && isString(request.resource.data.type)
+                    && request.resource.data.type in ['money', 'item']
+                    && isString(request.resource.data.status)
+                    && request.resource.data.status == 'published'
+                    // Money loan validation
+                    && (request.resource.data.type != 'money'
+                        || (isNumber(request.resource.data.amount)
+                            && request.resource.data.amount >= 1
+                            && request.resource.data.amount <= 100000
+                            && isNumber(request.resource.data.interestRate)
+                            && request.resource.data.interestRate >= 0
+                            && request.resource.data.interestRate <= 36))
+                    // Item loan validation
+                    && (request.resource.data.type != 'item'
+                        || (isString(request.resource.data.itemTitle)
+                            && request.resource.data.itemTitle.size() >= 2
+                            && request.resource.data.itemTitle.size() <= 100
+                            && isNumber(request.resource.data.replacementValue)
+                            && request.resource.data.replacementValue >= 1
+                            && request.resource.data.replacementValue <= 50000));
+
       allow update: if isAuthed()
                     && (resource.data.loanerId == request.auth.uid
                         || resource.data.borrowerId == request.auth.uid
-                        || isAdmin());
+                        || isAdmin())
+                    // Prevent changing loanerId after creation
+                    && request.resource.data.loanerId == resource.data.loanerId;
       allow delete: if isAdmin();
     }
 
@@ -54,16 +82,22 @@ service cloud.firestore {
     match /loanRequests/{requestId} {
       allow read: if isAuthed();
       allow create: if isAuthed()
-                    && request.resource.data.borrowerId == request.auth.uid;
+                    && request.resource.data.borrowerId == request.auth.uid
+                    && isNumber(request.resource.data.amount)
+                    && request.resource.data.amount >= 1
+                    && request.resource.data.amount <= 100000
+                    && isString(request.resource.data.purpose)
+                    && request.resource.data.purpose.size() >= 5
+                    && request.resource.data.purpose.size() <= 500
+                    && isString(request.resource.data.status)
+                    && request.resource.data.status == 'open';
       allow update: if isAuthed()
-                    && (resource.data.borrowerId == request.auth.uid || isAdmin());
+                    && (resource.data.borrowerId == request.auth.uid || isAdmin())
+                    && request.resource.data.borrowerId == resource.data.borrowerId;
       allow delete: if isAdmin();
     }
 
     // ====== Agreements ======
-    // Demo mode: parties of the agreement may create and update their own
-    // signature fields. Production will route through Cloud Functions for
-    // PDF generation + audit logging.
     match /agreements/{agreementId} {
       allow read: if isAuthed()
                   && (resource.data.loanerId == request.auth.uid
@@ -71,22 +105,33 @@ service cloud.firestore {
                       || isAdmin());
       allow create: if isAuthed()
                     && (request.resource.data.loanerId == request.auth.uid
-                        || request.resource.data.borrowerId == request.auth.uid);
+                        || request.resource.data.borrowerId == request.auth.uid)
+                    && isNumber(request.resource.data.loanAmount)
+                    && request.resource.data.loanAmount > 0
+                    && isNumber(request.resource.data.apr)
+                    && request.resource.data.apr >= 0
+                    && request.resource.data.apr <= 36;
       allow update: if isAuthed()
                     && (resource.data.loanerId == request.auth.uid
-                        || resource.data.borrowerId == request.auth.uid);
+                        || resource.data.borrowerId == request.auth.uid)
+                    // Cannot change core agreement terms after creation
+                    && request.resource.data.loanAmount == resource.data.loanAmount
+                    && request.resource.data.apr == resource.data.apr;
       allow delete: if isAdmin();
     }
 
     // ====== Transactions ======
-    // Demo mode: users may create their own transaction records (demo-only,
-    // no real money movement). Production: Cloud Function only — replace
-    // create with `if false` once payments service is wired up.
+    // Demo mode: users can create records. Production: Cloud Function only.
     match /transactions/{txId} {
       allow read: if isAuthed()
                   && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthed()
-                    && request.resource.data.userId == request.auth.uid;
+      allow create: if isDemoMode()
+                    && isAuthed()
+                    && request.resource.data.userId == request.auth.uid
+                    && isNumber(request.resource.data.amount)
+                    && request.resource.data.amount > 0
+                    && isString(request.resource.data.type)
+                    && request.resource.data.type in ['disbursement', 'repayment', 'fee', 'refund', 'chargeback'];
       allow update, delete: if false;
     }
 
@@ -95,7 +140,9 @@ service cloud.firestore {
       allow read: if isAuthed()
                   && request.auth.uid in resource.data.participantIds;
       allow create: if isAuthed()
-                    && request.auth.uid in request.resource.data.participantIds;
+                    && request.auth.uid in request.resource.data.participantIds
+                    && request.resource.data.participantIds.size() >= 2
+                    && request.resource.data.participantIds.size() <= 10;
       allow update: if isAuthed()
                     && request.auth.uid in resource.data.participantIds;
       allow delete: if isAdmin();
@@ -104,7 +151,10 @@ service cloud.firestore {
         allow read: if isAuthed()
                     && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds;
         allow create: if isAuthed()
-                      && request.resource.data.senderId == request.auth.uid;
+                      && request.resource.data.senderId == request.auth.uid
+                      && isString(request.resource.data.text)
+                      && request.resource.data.text.size() >= 1
+                      && request.resource.data.text.size() <= 2000;
         allow update: if isAuthed()
                       && (resource.data.senderId == request.auth.uid || isAdmin());
         allow delete: if isAdmin();
@@ -115,7 +165,9 @@ service cloud.firestore {
     match /kycSubmissions/{submissionId} {
       allow read: if isOwner(resource.data.userId) || isAdmin();
       allow create: if isAuthed()
-                    && request.resource.data.userId == request.auth.uid;
+                    && request.resource.data.userId == request.auth.uid
+                    && isString(request.resource.data.status)
+                    && request.resource.data.status in ['pending', 'manual_review'];
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -123,24 +175,30 @@ service cloud.firestore {
     // ====== Notifications ======
     match /notifications/{notifId} {
       allow read: if isOwner(resource.data.userId);
-      allow update: if isOwner(resource.data.userId);
-      allow create, delete: if false;
+      allow update: if isOwner(resource.data.userId)
+                    && request.resource.data.userId == resource.data.userId; // can't reassign
+      allow create, delete: if false; // Cloud Function only
     }
 
     // ====== Support Tickets ======
     match /supportTickets/{ticketId} {
       allow read: if isOwner(resource.data.userId) || isAdmin();
       allow create: if isAuthed()
-                    && request.resource.data.userId == request.auth.uid;
+                    && request.resource.data.userId == request.auth.uid
+                    && isString(request.resource.data.subject)
+                    && request.resource.data.subject.size() >= 3
+                    && request.resource.data.subject.size() <= 200;
       allow update: if isAdmin();
     }
 
     // ====== Admin Audit Log ======
-    // Demo: admins write directly. Production: Cloud Function only.
+    // Immutable append-only. Demo: admin direct write. Production: Cloud Function.
     match /adminActions/{actionId} {
       allow read: if isAdmin();
       allow create: if isAdmin()
-                    && request.resource.data.adminId == request.auth.uid;
+                    && request.resource.data.adminId == request.auth.uid
+                    && isString(request.resource.data.action)
+                    && isNumber(request.resource.data.timestamp);
       allow update, delete: if false;
     }
 
@@ -154,7 +212,11 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if isAdmin();
       allow create: if isAuthed()
-                    && request.resource.data.reporterId == request.auth.uid;
+                    && request.resource.data.reporterId == request.auth.uid
+                    && isString(request.resource.data.reason)
+                    && request.resource.data.reason in ['spam', 'fraud', 'harassment', 'inappropriate', 'other']
+                    && isString(request.resource.data.contentType)
+                    && request.resource.data.contentType in ['message', 'profile', 'listing'];
       allow update, delete: if isAdmin();
     }
 
