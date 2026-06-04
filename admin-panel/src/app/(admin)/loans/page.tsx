@@ -95,8 +95,10 @@ export default function LoansPage() {
         <div>
           <h1 className="text-2xl font-bold">Loan Management</h1>
           <p className="text-sm text-white/50">
-            {stats.total} total · {stats.active} active · {formatMoney(stats.totalValue)} loaned ·{' '}
-            <span className="text-danger">{stats.overdue} overdue</span>
+            {loansQ.isLoading ? 'Loading…' : (
+              <>{stats.total} total · {stats.active} active · {formatMoney(stats.totalValue)} loaned ·{' '}
+              <span className="text-danger">{stats.overdue} overdue</span></>
+            )}
           </p>
         </div>
         <button

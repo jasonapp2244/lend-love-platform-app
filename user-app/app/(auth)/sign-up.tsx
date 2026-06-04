@@ -31,7 +31,7 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [birthday, setBirthday] = useState<number>(
-    Date.now() - 20 * 365.25 * 24 * 60 * 60 * 1000, // default: 20 years ago
+    new Date(new Date().getFullYear() - 25, 0, 1).getTime(), // default: Jan 1, 25 years ago
   );
   const [acceptedTos, setAcceptedTos] = useState(false);
   const [loading, setLoading] = useState(false);

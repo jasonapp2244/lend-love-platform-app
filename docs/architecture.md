@@ -36,7 +36,7 @@ Lend Love is a serverless, cloud-native P2P lending platform built on **Firebase
         └────────────────────┘    └──────────┬───────────┘    │ • Paykings (NMI)   │
                                              │                │ • Stream Chat      │
                           ┌──────────────────┼────────────┐   │ • SendGrid         │
-                          │                  │            │   │ • Twilio           │
+                          │                  │         p   │   │ • Twilio           │
                   ┌───────▼──────┐  ┌────────▼─────┐ ┌────▼───┴──────┐
                   │  Firestore   │  │  Firebase    │ │  Firebase     │
                   │  (Database)  │  │  Storage     │ │  Auth         │

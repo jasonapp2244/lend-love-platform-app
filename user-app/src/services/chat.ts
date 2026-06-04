@@ -117,5 +117,23 @@ export function counterpartyName(uids: string[], selfUid: string): string {
   if (other.startsWith('demo-borrower')) return 'Demo Borrower';
   if (other.startsWith('demo-marketplace')) return 'Marketplace Loaner';
   if (other.startsWith('demo-request')) return 'Borrower';
-  return other.slice(0, 8);
+  return 'User';
+}
+
+/** Fetch the real display name for a counterparty from Firestore. */
+export async function fetchCounterpartyName(uids: string[], selfUid: string): Promise<string> {
+  const other = uids.find((u) => u !== selfUid);
+  if (!other) return 'Counterparty';
+  // Check demo names first
+  const quick = counterpartyName(uids, selfUid);
+  if (quick !== 'User') return quick;
+  // Look up real name from Firestore
+  try {
+    const snap = await getDoc(doc(db, 'users', other));
+    if (snap.exists()) {
+      const data = snap.data();
+      return data.fullName || data.email || 'User';
+    }
+  } catch { /* fallback */ }
+  return 'User';
 }

@@ -16,6 +16,7 @@ import { useAuthStore } from '../../src/store/auth';
 import {
   subscribeToConversations,
   counterpartyName,
+  fetchCounterpartyName,
 } from '../../src/services/chat';
 import type { Conversation } from '../../src/shared';
 
@@ -36,6 +37,7 @@ export default function Chat() {
   const { uid } = useAuthStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [names, setNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!uid) return;
@@ -43,6 +45,13 @@ export default function Chat() {
     const unsub = subscribeToConversations(uid, (list) => {
       setConversations(list);
       setLoading(false);
+      // Resolve real names for any conversation whose counterparty shows as "User"
+      list.forEach(async (conv) => {
+        const key = conv.id;
+        if (names[key]) return;
+        const name = await fetchCounterpartyName(conv.participantIds, uid);
+        setNames((prev) => ({ ...prev, [key]: name }));
+      });
     });
     return unsub;
   }, [uid]);
@@ -82,7 +91,7 @@ export default function Chat() {
             <View style={styles.body}>
               <View style={styles.bodyTopRow}>
                 <Text style={[styles.name, { color: theme.textPrimary }]} numberOfLines={1}>
-                  {counterpartyName(item.participantIds, uid ?? '')}
+                  {names[item.id] ?? counterpartyName(item.participantIds, uid ?? '')}
                 </Text>
                 <Text style={[styles.time, { color: theme.textMuted }]}>
                   {timeAgo(item.lastMessageAt)}
