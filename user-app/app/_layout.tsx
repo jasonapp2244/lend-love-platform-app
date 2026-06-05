@@ -9,7 +9,9 @@ import { PlatformConfigProvider } from '../src/hooks/usePlatformConfig';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { OfflineBanner } from '../src/components/OfflineBanner';
 import { useAuthStore } from '../src/store/auth';
-import { onAuthChange, getProfile } from '../src/services/auth';
+import { onAuthChange, getProfile, signOut as fbSignOut } from '../src/services/auth';
+import { authenticateWithBiometrics } from '../src/services/biometrics';
+import { registerForPushNotifications } from '../src/services/push-notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +28,20 @@ function AuthListener() {
       if (uid) {
         const profile = await getProfile(uid);
         setProfile(profile);
+        // Register for push notifications (non-blocking)
+        if (profile?.notificationsEnabled) {
+          registerForPushNotifications(uid).catch(() => {});
+        }
+        // Biometric gate: if user enabled biometrics, prompt before unlocking
+        if (profile?.biometricsEnabled) {
+          const passed = await authenticateWithBiometrics();
+          if (!passed) {
+            // Failed biometric — sign out
+            await fbSignOut();
+            setUid(null);
+            setProfile(null);
+          }
+        }
       } else {
         setProfile(null);
       }

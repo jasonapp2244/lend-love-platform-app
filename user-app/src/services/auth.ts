@@ -10,6 +10,7 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signOut as fbSignOut,
   onAuthStateChanged,
   type User as FbUser,
@@ -116,6 +117,8 @@ export async function signUp(
     updatedAt: Date.now(),
   };
   await setDoc(doc(db, 'users', cred.user.uid), baseProfile);
+  // Send email verification (non-blocking — don't await)
+  sendEmailVerification(cred.user).catch(() => {});
   return cred.user;
 }
 

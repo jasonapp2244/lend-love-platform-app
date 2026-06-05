@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { db } from '../../src/services/firebase';
 import { useAuthStore } from '../../src/store/auth';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { HeartLogo } from '../../src/components/HeartLogo';
@@ -17,6 +19,19 @@ export default function Home() {
   const router = useRouter();
   const lending = useMyLending(uid);
   const borrowing = useMyBorrowing(uid);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!uid) return;
+    getDocs(
+      query(
+        collection(db, 'notifications'),
+        where('userId', '==', uid),
+        where('read', '==', false),
+        limit(99),
+      ),
+    ).then((snap) => setUnreadCount(snap.size)).catch(() => {});
+  }, [uid]);
 
   const activeLoans = [...(lending.data ?? []), ...(borrowing.data ?? [])]
     .filter((l) => l.status === 'active' || l.status === 'published')
@@ -30,8 +45,13 @@ export default function Home() {
             <HeartLogo size={32} />
             <Text style={[styles.brand, { color: theme.textPrimary }]}>Lend Love™</Text>
           </View>
-          <Pressable hitSlop={8}>
+          <Pressable hitSlop={8} onPress={() => router.push('/notifications' as never)}>
             <Ionicons name="notifications-outline" size={24} color={theme.textPrimary} />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
           </Pressable>
         </View>
 
@@ -218,5 +238,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.xl,
     alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    backgroundColor: '#D32F2F',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
   },
 });

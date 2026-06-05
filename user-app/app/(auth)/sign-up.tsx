@@ -73,7 +73,11 @@ export default function SignUp() {
       setUid(newUid);
       const profile = await getProfile(newUid);
       setProfile(profile);
-      router.replace('/(tabs)/home' as never);
+      Alert.alert(
+        'Verify Your Email',
+        'A verification link has been sent to your email. Please check your inbox.',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)/home' as never) }],
+      );
     } catch (e: any) {
       const msg =
         e?.code === 'auth/email-already-in-use'
