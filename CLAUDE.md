@@ -8,9 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Lend Love** is a peer-to-peer (P2P) lending platform supporting **money loans and item loans** between individuals. The platform consists of three connected systems in a monorepo:
 
-1. **Mobile User App** (`user-app/`) — React Native + Expo (iOS, Android, Web)
-2. **Web Admin Panel** (`admin-panel/`) — Next.js 14 (App Router)
-3. **Backend** (`backend/`) — Firebase Cloud Functions (Node.js 20)
+1. **Mobile User App** (`user-app/`) — React Native + Expo (iOS, Android, Web) — 20 screens
+2. **Web Admin Panel** (`admin-panel/`) — Next.js 14 (App Router) — 14 pages
+3. **Backend** (`backend/`) — Firebase Cloud Functions (Node.js 20) — 4 functions
 4. **Shared** (`shared/`) — TypeScript types, Zod schemas, constants, theme tokens
 
 Both Loaners and Borrowers use the **same mobile app and account**. A user can lend AND borrow simultaneously.
@@ -27,7 +27,7 @@ P2P lending apps are heavily scrutinized. Read [docs/store-compliance.md](docs/s
 
 1. Account deletion — cascade delete with legal retention (`/delete-account`)
 2. Privacy Policy + Terms of Service — linked from sign-up ToS toggle + help page
-3. Age verification (18+) — DOB field + Zod schema in sign-up
+3. Age verification (18+) — DOB field + Zod schema + email verification on sign-up
 4. APR caps (36%) — dynamic from admin config, enforced in client + Cloud Function + Firestore rules
 5. Loan term minimum (60 days) — dynamic from admin config
 6. TILA disclosures — APR, finance charge, total of payments in every agreement
@@ -45,14 +45,14 @@ P2P lending apps are heavily scrutinized. Read [docs/store-compliance.md](docs/s
 
 ## Architecture: Dynamic Platform Config
 
-Admin config changes propagate to the user app in real-time via Firestore. This is a critical design decision — understand it before modifying validation or feature flags.
+Admin config changes propagate to the user app in real-time via Firestore.
 
 ```
 Admin Config Page (admin-panel)
-  → writes to Firestore config/platform
-  → PlatformConfigProvider (user-app) listens via onSnapshot
-  → Dynamic Zod schemas use runtime config values
-  → Cloud Function reads config before validating loans
+  -> writes to Firestore config/platform
+  -> PlatformConfigProvider (user-app) listens via onSnapshot
+  -> Dynamic Zod schemas use runtime config values
+  -> Cloud Function reads config before validating loans
 ```
 
 **Key files:**
@@ -65,11 +65,11 @@ Admin Config Page (admin-panel)
 - `mobile.itemLoans` — hides/shows Items tab + item loan toggle
 - `mobile.borrowerRequests` — hides/shows Requests tab
 - `mobile.biometricLogin` — hides/shows biometric toggle in settings
-- `mobile.chatAttachments` — reserved for chat image uploads
+- `mobile.chatAttachments` — controls chat image attachment button
 - `compliance.requireKycForBorrowing` — blocks unverified borrowers
 - `compliance.requireKycForLending` — blocks unverified lenders
 - `compliance.amlScreeningEnforced` — routes flagged users to review
-- `integrations.paykings.enabled` — enables real payment processing
+- `integrations.paykings.enabled` — enables real payment processing + payment UI
 - `integrations.idAnalyzer.enabled` — enables real KYC verification
 - `integrations.streamChat.enabled` — enables Stream Chat at scale
 - `maintenance.readOnlyMode` — blocks all creates with maintenance message
@@ -78,7 +78,7 @@ Admin Config Page (admin-panel)
 
 ## Admin Tier Enforcement
 
-Admin tiers restrict which pages and actions each admin role can access. Defined in `admin-panel/src/lib/auth-context.tsx`.
+Admin tiers restrict which pages each admin role can access. Defined in `admin-panel/src/lib/auth-context.tsx`.
 
 | Page | super | operations | finance | support |
 |------|-------|-----------|---------|---------|
@@ -87,142 +87,93 @@ Admin tiers restrict which pages and actions each admin role can access. Defined
 | KYC Queue | yes | yes | - | yes |
 | Loans | yes | yes | yes | - |
 | Agreements | yes | yes | yes | - |
+| Transactions | yes | - | yes | - |
+| Moderation | yes | yes | - | yes |
+| Support Tickets | yes | yes | - | yes |
 | Reports | yes | - | yes | - |
+| Notifications | yes | yes | - | - |
+| Compliance | yes | - | - | - |
 | Audit Log | yes | - | - | - |
 | Config | yes | - | - | - |
 
-Sidebar nav items are filtered by tier. Unauthorized pages show a "Access Restricted" message.
+Sidebar nav items (13 total) are filtered by tier. Unauthorized pages show "Access Restricted".
 
 ---
 
-## Tech Stack
+## User App Screens (20 total)
 
-| Layer | Technology |
-|---|---|
-| **Mobile** | React Native (Expo SDK 51+) + TypeScript |
-| **Admin Web** | Next.js 14 (App Router) + TypeScript + Tailwind CSS |
-| **Backend** | Firebase Cloud Functions (Node.js 20 + TypeScript) |
-| **Database** | Firestore (12 collections, 11 composite indexes) |
-| **Auth** | Firebase Authentication (email/password + anonymous demo) |
-| **Storage** | Firebase Storage (KYC docs, signatures, profiles) |
-| **State (mobile)** | Zustand (auth) + TanStack Query (server state) |
-| **State (web)** | TanStack Query |
-| **Validation** | Zod schemas (shared + dynamic) |
-| **Charts (mobile)** | Custom (react-native-svg based, no external chart library) |
-| **Chat** | Firestore real-time (Stream Chat ready for scale) |
-| **KYC** | ID Analyzer DocuPass (mocked in demo, auto-approves) |
-| **Payments** | Paykings + NMI Gateway (not yet integrated, needs Blaze) |
-
----
-
-## Common Commands
-
-```bash
-# Root (runs all workspaces)
-npm install              # Install all packages
-npm run emulators        # Start Firebase emulators
-npm run mobile           # Start user-app Expo dev server
-npm run admin            # Start admin-panel Next.js dev (localhost:3000)
-npm run typecheck        # Typecheck all packages
-npm run lint             # Lint all packages
-
-# User App
-cd user-app
-npm run start            # Expo dev server
-npm run ios              # iOS simulator
-npm run android          # Android emulator
-npm run web              # Web browser
-
-# Admin Panel
-cd admin-panel
-npm run dev              # localhost:3000
-npm run build            # Production build
-
-# Backend
-cd backend/functions
-npm run build            # Compile TypeScript
-npm run serve            # Build + emulators
-
-# Deploy
-npm run deploy:rules     # Firestore + Storage rules
-npm run deploy:functions # Cloud Functions
-```
+| Screen | Route | Key Features |
+|--------|-------|-------------|
+| Welcome/Login | `/welcome` | Email/password, Forgot Password, Guest demo buttons |
+| Sign Up | `/sign-up` | Full name, email, password, DOB (18+), ToS toggle, email verification |
+| Home | `/(tabs)/home` | Stats, quick actions, active loans, notification bell with badge |
+| Marketplace | `/(tabs)/marketplace` | 3 tabs (Money/Items/Requests), search, infinite scroll |
+| My Loans | `/(tabs)/my-loans` | Lending/Borrowing tabs, skeleton loaders |
+| Chat | `/(tabs)/chat` | Real-time messages, image attachments, report/block menu |
+| Profile | `/(tabs)/profile` | Rating, verified badge, menu links |
+| Create Loan | `/create-loan` | Money/Item toggle, dynamic validation from admin config |
+| Request Loan | `/request-loan` | Amount, purpose, term, collateral |
+| Loan Detail | `/loan/[id]` | Full details, contact, draft agreement, leave review (completed loans) |
+| Analytics | `/analytics` | KPI cards, donut chart, status bars, lending vs borrowing |
+| Transactions | `/transactions` | Transaction history list |
+| Agreements | `/agreements` | Agreement list with self-loan detection |
+| KYC | `/kyc` | 3-step flow (ID, selfie, address), AML disclosure |
+| Account Settings | `/account-settings` | Edit profile, notifications toggle, biometrics toggle |
+| Notifications | `/notifications` | Notification list with read/unread state, badge count |
+| Payment Methods | `/payment-methods` | Add card/bank (Paykings-ready), demo banner |
+| Repayment | `/repayment` | Loan summary, pay now, auto-pay setup |
+| Help | `/help` | Support, privacy, terms links |
+| Delete Account | `/delete-account` | Warning, cascade delete, DELETE confirmation |
 
 ---
 
-## Environment Variables
+## Admin Panel Pages (14 total)
 
-Firebase credentials are read from `.env` files (not hardcoded in source).
-
-### Mobile App (`user-app/.env`)
-```
-EXPO_PUBLIC_FIREBASE_API_KEY=
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-EXPO_PUBLIC_FIREBASE_APP_ID=
-EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID=
-```
-
-### Admin Panel (`admin-panel/.env.local`)
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
-```
-
-### Backend (Firebase Functions Config)
-```bash
-firebase functions:config:set \
-  idanalyzer.api_key="..." \
-  paykings.api_key="..." \
-  paykings.gateway_id="..." \
-  sendgrid.api_key="..." \
-  twilio.account_sid="..." \
-  twilio.auth_token="..."
-```
+| Page | Route | Key Features |
+|------|-------|-------------|
+| Login | `/login` | Email/password + Demo Admin button |
+| Dashboard | `/dashboard` | 7 KPI cards (users, loans, value, overdue, default rate, avg loan, verified rate), loan types, marketplace |
+| Users | `/users` | Search, filter, verify/suspend, detail panel |
+| KYC Queue | `/kyc` | Filter by status, approve/reject/flag, document viewer |
+| Loans | `/loans` | 16 loans, status filters, admin notes, agreement viewer |
+| Agreements | `/agreements` | TILA data, signatures, filters (all/signed/pending) |
+| Transactions | `/transactions` | Status filters, volume stats, color-coded amounts |
+| Moderation | `/moderation` | Content reports, Take Action/Dismiss with audit |
+| Support Tickets | `/tickets` | Priority badges, message thread, admin reply, resolve/close |
+| Reports | `/reports` | Date filters, KPIs, KYC funnel, 5 CSV exports, top loaners/borrowers |
+| Notifications | `/notifications` | Broadcast form, audience selector (all/verified/unverified/admin) |
+| Compliance | `/compliance` | 3 tabs: AML flags, GDPR/suspensions, suspicious activity |
+| Audit Log | `/audit` | Search, category filters, before/after values, IP address |
+| Config | `/config` | 11 feature flags, 6 numeric settings, compliance banner |
 
 ---
 
-## Firestore Security Rules
+## Key Services & Components
 
-Rules are in `backend/firestore.rules` (200+ lines). They enforce:
+### Auth & Security
+- `user-app/src/services/auth.ts` — Sign in/up, email verification, guest demo
+- `user-app/src/services/biometrics.ts` — FaceID/fingerprint via expo-local-authentication
+- `user-app/src/services/push-notifications.ts` — FCM token registration, foreground handler
+- `admin-panel/src/lib/audit.ts` — Audit logging with IP capture
 
-- **Auth checks** — owner, admin, participant validation per collection
-- **Data validation** — field types, ranges (amount > 0, APR 0-36%, text length limits)
-- **Immutability** — loanerId cannot change after creation, agreement terms locked after creation
-- **Demo mode** — `isDemoMode()` function checks if Paykings integration is disabled; transaction creates are only allowed in demo mode
-- **14 collections covered**: users, loans, loanRequests, agreements, transactions, conversations, messages, kycSubmissions, notifications, supportTickets, adminActions, config, reports, blockedUsers
+### Moderation & Reviews
+- `user-app/src/components/ReportModal.tsx` — Report content (5 reasons)
+- `user-app/src/components/ReviewModal.tsx` — 5-star rating + comment
+- `user-app/src/services/moderation.ts` — Block/unblock users
+- `user-app/src/services/reviews.ts` — Submit review, update aggregate rating
 
----
+### Chat
+- `user-app/src/services/chat.ts` — Real-time messages, attachments, counterparty name resolution
+- Image attachments upload to `chat/{convId}/` in Firebase Storage
 
-## Key Files
+### Payments (Paykings-ready)
+- `user-app/app/payment-methods.tsx` — Card/bank forms, gated by `integrations.paykings.enabled`
+- `user-app/app/repayment.tsx` — Loan summary, pay now, auto-pay setup
 
-### Platform Config System
-- `user-app/src/hooks/usePlatformConfig.ts` — Real-time config provider
-- `user-app/src/services/dynamic-schemas.ts` — Dynamic Zod schema factory
-- `admin-panel/src/lib/config-service.ts` — Config CRUD + audit
-
-### Auth & Permissions
-- `user-app/src/store/auth.ts` — Zustand auth store
-- `admin-panel/src/lib/auth-context.tsx` — Auth provider + `useRequireAdmin()` + `useAdminTierAccess()`
-
-### Moderation
-- `user-app/src/components/ReportModal.tsx` — Report content modal (5 reasons)
-- `user-app/src/services/moderation.ts` — Block/unblock user service
-
-### Error Handling
+### Error Handling & UX
 - `user-app/src/components/ErrorBoundary.tsx` — Global crash boundary
-- `user-app/src/components/OfflineBanner.tsx` — Network status banner
-
-### UX Components
+- `user-app/src/components/OfflineBanner.tsx` — Network status detection
 - `user-app/src/components/SkeletonCard.tsx` — Shimmer loading cards
-- `user-app/src/components/SignaturePad.tsx` — SVG signature capture
 
 ### Cloud Functions (4 total)
 - `backend/functions/src/auth/onCreateUser.ts` — Profile bootstrap
@@ -235,8 +186,14 @@ Rules are in `backend/firestore.rules` (200+ lines). They enforce:
 ## CI/CD
 
 GitHub Actions workflow in `.github/workflows/ci.yml`:
-- **On PR/push to main**: Typecheck all 3 packages (user-app, admin-panel, backend/functions)
+- **On PR/push to main**: Typecheck all 3 packages
 - **On push to main**: Deploy Firestore/Storage rules + Cloud Functions (requires `FIREBASE_TOKEN` secret)
+
+---
+
+## Environment Variables
+
+Firebase credentials are read from `.env` files (not hardcoded in source). See `.env.example` in both `user-app/` and `admin-panel/`.
 
 ---
 
@@ -244,38 +201,26 @@ GitHub Actions workflow in `.github/workflows/ci.yml`:
 
 - **Strict TypeScript** — no `any`, use `unknown` if truly unknown
 - **Zod validation** at all API boundaries (client forms + Cloud Functions)
-- **Dynamic config** — never hardcode compliance values (APR cap, loan limits). Use `usePlatformConfig()` hook or read from `config/platform` Firestore doc
-- **Feature flags** — check via `flag('mobile.itemLoans')` from `usePlatformConfig()`, not hardcoded booleans
-- **Firestore queries** — always use `where` + `orderBy` with indexes, paginate with `startAfter()`, use `limit()` on every query
+- **Dynamic config** — never hardcode compliance values. Use `usePlatformConfig()` or Firestore `config/platform`
+- **Feature flags** — check via `flag('key')` from `usePlatformConfig()`, not hardcoded booleans
+- **Firestore queries** — always use `where` + `orderBy` with indexes, paginate with `startAfter()`, use `limit()`
 - **Accessibility** — add `accessibilityRole` and `accessibilityLabel` to all interactive elements
 - **Named exports** for components, one component per file
-- **Server state in TanStack Query**, local UI state in Zustand — never put server data in Zustand
+- **Server state in TanStack Query**, local UI state in Zustand
 
 ---
 
-## Workflow: Adding a New Feature
+## What Needs External Setup (Not Code)
 
-1. Define types in `shared/src/types.ts`
-2. Add Zod schema in `shared/src/schemas.ts` (or dynamic schema in `user-app/src/services/dynamic-schemas.ts` if it needs config values)
-3. Implement Cloud Function in `backend/functions/src/`
-4. Update `backend/firestore.rules` with data validation
-5. Add client service in `user-app/src/services/`
-6. Build UI screen in `user-app/app/`
-7. If admin-visible, add admin page in `admin-panel/src/app/(admin)/`
-8. Run `npm run typecheck` across all packages before committing
-
----
-
-## What's Not Yet Built (Needs Blaze Plan)
-
-These features are architecturally ready but require Firebase Blaze upgrade + API credentials:
-
-- **Paykings payment processing** — Transaction model exists, feature flag ready, Cloud Function stub needed
-- **ID Analyzer real KYC** — Currently auto-approves in demo, production calls DocuPass API
-- **SendGrid email notifications** — Notification types defined, delivery functions not built
-- **Twilio SMS alerts** — Same as above
-- **FCM push notifications** — expo-notifications not yet installed
-- **Scheduled overdue checker** — Needs Blaze for scheduled functions
+| Item | What's Needed |
+|------|--------------|
+| Firebase Blaze upgrade | Billing setup (pay-as-you-go, free tier included) |
+| Paykings merchant account | Business registration + API credentials |
+| ID Analyzer account | Paid subscription + API key |
+| Privacy Policy hosting | Domain + page at lendlove.com/privacy |
+| Terms of Service hosting | Domain + page at lendlove.com/terms |
+| FIREBASE_TOKEN secret | GitHub secret for CI/CD deployment |
+| Set demoMode: false | In user-app/app.json after Blaze upgrade |
 
 ---
 
@@ -294,4 +239,4 @@ These features are architecturally ready but require Firebase Blaze upgrade + AP
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-06*
