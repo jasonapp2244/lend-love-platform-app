@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { collection as coll, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import {
   fetchReportsOverview,
   exportUsersCsv,
@@ -12,6 +14,7 @@ import {
   type DateRange,
 } from '@/lib/reports-service';
 import { formatMoney } from '@/lib/format';
+import type { User } from '@lendlove/shared';
 
 const RANGES: Array<{ key: DateRange; label: string }> = [
   { key: '7d', label: 'Last 7 days' },
@@ -187,6 +190,45 @@ export default function ReportsPage() {
           />
         </div>
       </div>
+
+      {/* Top Loaners & Borrowers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Panel title="Top Loaners (by total lent)">
+          {!overviewQ.data ? <div className="text-white/30">Loading…</div> : (
+            <TopUsersList collection="users" sortField="totalLent" labelField="totalLent" />
+          )}
+        </Panel>
+        <Panel title="Top Borrowers (by total borrowed)">
+          {!overviewQ.data ? <div className="text-white/30">Loading…</div> : (
+            <TopUsersList collection="users" sortField="totalBorrowed" labelField="totalBorrowed" />
+          )}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function TopUsersList({ collection: _col, sortField, labelField }: { collection: string; sortField: string; labelField: string }) {
+  const topQ = useQuery({
+    queryKey: ['admin', 'top', sortField],
+    queryFn: async () => {
+      const snap = await getDocs(query(coll(db(), _col), orderBy(sortField, 'desc'), limit(5)));
+      return snap.docs.map((d) => d.data() as User);
+    },
+  });
+  const users = topQ.data ?? [];
+  if (users.length === 0) return <div className="text-white/30 text-sm">No data yet</div>;
+  return (
+    <div className="space-y-2 text-sm">
+      {users.map((u, i) => (
+        <div key={u.uid ?? i} className="flex justify-between border-b border-border/50 pb-2">
+          <div>
+            <span className="text-white/80 font-medium">{u.fullName || 'Anonymous'}</span>
+            <span className="text-white/30 text-xs ml-2">{u.email}</span>
+          </div>
+          <span className="font-bold text-primary tabular-nums">${((u as any)[labelField] ?? 0).toLocaleString()}</span>
+        </div>
+      ))}
     </div>
   );
 }

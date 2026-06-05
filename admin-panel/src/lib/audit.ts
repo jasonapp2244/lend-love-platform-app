@@ -10,6 +10,17 @@ import type { AdminAction } from '@lendlove/shared';
  *
  * Demo: writes directly. Production: route through Cloud Function.
  */
+/** Best-effort IP detection (client-side). */
+async function fetchClientIp(): Promise<string | undefined> {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2000) });
+    const data = await res.json();
+    return data.ip;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function audit(
   action: string,
   target: { collection: string; id: string },
@@ -28,7 +39,7 @@ export async function audit(
     before: changes.before,
     after: changes.after,
     timestamp: Date.now(),
-    ip: undefined,
+    ip: await fetchClientIp(),
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   };
   await setDoc(ref, entry);

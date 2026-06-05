@@ -216,6 +216,12 @@ function AuditEntry({
               </pre>
             </div>
           ) : null}
+          {row.ip ? (
+            <div>
+              <div className="text-white/40 uppercase tracking-wider mb-1">IP Address</div>
+              <code className="font-mono text-white/70">{row.ip}</code>
+            </div>
+          ) : null}
           {row.userAgent ? (
             <div>
               <div className="text-white/40 uppercase tracking-wider mb-1">User Agent</div>

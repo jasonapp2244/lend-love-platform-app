@@ -19,8 +19,9 @@ import type { User, Loan, LoanRequest } from '@lendlove/shared';
 
 export async function fetchDashboardStats() {
   const _db = db();
-  const [usersCount, loansSnap, requestsSnap] = await Promise.all([
+  const [usersCount, verifiedCount, loansSnap, requestsSnap] = await Promise.all([
     getCountFromServer(collection(_db, 'users')),
+    getCountFromServer(query(collection(_db, 'users'), where('isVerified', '==', true))),
     getDocs(query(collection(_db, 'loans'), limit(500))),
     getCountFromServer(query(collection(_db, 'loanRequests'), where('status', '==', 'open'))),
   ]);
@@ -45,6 +46,7 @@ export async function fetchDashboardStats() {
     moneyLoanCount: moneyLoans.length,
     itemLoanCount: itemLoans.length,
     openRequestCount: requestsSnap.data().count,
+    verifiedUsers: verifiedCount.data().count,
   };
 }
 

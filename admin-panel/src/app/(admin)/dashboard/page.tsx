@@ -63,6 +63,31 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Additional metrics row */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-bg-surface border border-border rounded-xl p-5">
+          <div className="text-xs uppercase tracking-wider text-white/50">Default Rate</div>
+          <div className="mt-2 text-2xl font-bold text-danger">
+            {data ? ((data.overdueCount / Math.max(data.activeLoanCount + data.completedCount, 1)) * 100).toFixed(1) : '0'}%
+          </div>
+          <div className="text-xs text-white/30 mt-1">Overdue / total loans</div>
+        </div>
+        <div className="bg-bg-surface border border-border rounded-xl p-5">
+          <div className="text-xs uppercase tracking-wider text-white/50">Avg Loan Size</div>
+          <div className="mt-2 text-2xl font-bold text-primary-light">
+            {data && data.activeLoanCount > 0 ? formatMoney(Math.round(data.activeLoanValue / data.activeLoanCount)) : '$0'}
+          </div>
+          <div className="text-xs text-white/30 mt-1">Active loan value / count</div>
+        </div>
+        <div className="bg-bg-surface border border-border rounded-xl p-5">
+          <div className="text-xs uppercase tracking-wider text-white/50">Verified Rate</div>
+          <div className="mt-2 text-2xl font-bold text-primary-light">
+            {data ? Math.round((data.verifiedUsers / Math.max(data.totalUsers, 1)) * 100) : 0}%
+          </div>
+          <div className="text-xs text-white/30 mt-1">KYC verified / total users</div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-bg-surface border border-border rounded-xl p-6">
           <h2 className="text-sm uppercase tracking-wider text-white/50 mb-4">Loan Types</h2>
