@@ -67,7 +67,9 @@ export default function DraftAgreement() {
 
       // For demo: if no borrower yet, sign both sides as the same user
       const borrowerId = loan.borrowerId ?? uid;
-      const borrowerName = loan.borrowerId ? 'Guest Borrower' : profile.fullName;
+      const borrowerName = loan.borrowerId
+        ? 'Guest Borrower'
+        : `${profile.fullName} (self-loan demo)`;
 
       return createDraftAgreement({
         loan: { ...loan, amount: numAmount, interestRate: numInterest, dueDate },

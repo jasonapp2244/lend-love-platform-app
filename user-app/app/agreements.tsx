@@ -110,7 +110,9 @@ export default function Agreements() {
                   {formatMoney(item.loanAmount, item.currency)} loan
                 </Text>
                 <Text style={[typography.caption, { color: theme.textSecondary }]}>
-                  Loaner: {item.loanerName} → Borrower: {item.borrowerName}
+                  {item.loanerId === item.borrowerId
+                    ? `${item.loanerName} (self-loan demo)`
+                    : `Loaner: ${item.loanerName} → Borrower: ${item.borrowerName}`}
                 </Text>
                 <Text style={[typography.caption, { color: theme.textMuted }]}>
                   Due {formatDate(item.dueDate)} • APR {item.apr.toFixed(2)}%

@@ -112,7 +112,9 @@ export async function fetchConversation(id: string): Promise<Conversation | null
 
 /** Build a placeholder display name for a counterparty UID (used in demo). */
 export function counterpartyName(uids: string[], selfUid: string): string {
-  const other = uids.find((u) => u !== selfUid) ?? 'Counterparty';
+  const other = uids.find((u) => u !== selfUid);
+  // Self-chat (demo: same user is both loaner and borrower)
+  if (!other) return 'You (self-loan)';
   if (other.startsWith('demo-loaner')) return 'Demo Loaner';
   if (other.startsWith('demo-borrower')) return 'Demo Borrower';
   if (other.startsWith('demo-marketplace')) return 'Marketplace Loaner';
@@ -123,7 +125,17 @@ export function counterpartyName(uids: string[], selfUid: string): string {
 /** Fetch the real display name for a counterparty from Firestore. */
 export async function fetchCounterpartyName(uids: string[], selfUid: string): Promise<string> {
   const other = uids.find((u) => u !== selfUid);
-  if (!other) return 'Counterparty';
+  // Self-chat — look up own name
+  if (!other) {
+    try {
+      const snap = await getDoc(doc(db, 'users', selfUid));
+      if (snap.exists()) {
+        const data = snap.data();
+        return `${data.fullName || 'You'} (self-loan)`;
+      }
+    } catch { /* fallback */ }
+    return 'You (self-loan)';
+  }
   // Check demo names first
   const quick = counterpartyName(uids, selfUid);
   if (quick !== 'User') return quick;
