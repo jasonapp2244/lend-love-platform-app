@@ -105,6 +105,32 @@ export async function sendMessage(
   });
 }
 
+/** Send a message with an attachment (image or PDF URL). */
+export async function sendAttachmentMessage(
+  conversationId: string,
+  senderId: string,
+  attachmentUrl: string,
+  attachmentType: 'image' | 'pdf',
+): Promise<void> {
+  const msgsRef = collection(db, 'conversations', conversationId, 'messages');
+  const label = attachmentType === 'image' ? '📷 Image' : '📄 Document';
+  const docRef = await addDoc(msgsRef, {
+    conversationId,
+    senderId,
+    text: label,
+    attachmentUrl,
+    attachmentType,
+    sentAt: Date.now(),
+    readBy: [senderId],
+  });
+  await updateDoc(docRef, { id: docRef.id });
+  await updateDoc(doc(db, 'conversations', conversationId), {
+    lastMessage: label,
+    lastMessageAt: Date.now(),
+    lastSenderId: senderId,
+  });
+}
+
 export async function fetchConversation(id: string): Promise<Conversation | null> {
   const snap = await getDoc(doc(db, 'conversations', id));
   return snap.exists() ? (snap.data() as Conversation) : null;

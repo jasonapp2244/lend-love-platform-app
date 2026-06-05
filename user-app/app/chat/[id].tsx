@@ -14,11 +14,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { useAuthStore } from '../../src/store/auth';
-import { Alert } from 'react-native';
+import { usePlatformConfig } from '../../src/hooks/usePlatformConfig';
+import { Alert, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../src/services/firebase';
 import {
   fetchConversation,
   subscribeToMessages,
   sendMessage,
+  sendAttachmentMessage,
   counterpartyName,
 } from '../../src/services/chat';
 import { blockUser } from '../../src/services/moderation';
@@ -30,6 +35,8 @@ export default function ConversationDetail() {
   const router = useRouter();
   const { theme } = useTheme();
   const { uid } = useAuthStore();
+  const { flag } = usePlatformConfig();
+  const chatAttachmentsEnabled = flag('mobile.chatAttachments');
 
   const [conv, setConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -61,6 +68,29 @@ export default function ConversationDetail() {
       await sendMessage(id, uid, t);
     } catch {
       setText(t); // restore on failure
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleAttachment = async () => {
+    if (!uid || !id) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    setSending(true);
+    try {
+      const asset = result.assets[0];
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `chat/${id}/${Date.now()}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const url = await getDownloadURL(storageRef);
+      await sendAttachmentMessage(id, uid, url, 'image');
+    } catch (e: any) {
+      Alert.alert('Upload failed', e?.message ?? 'Could not send image.');
     } finally {
       setSending(false);
     }
@@ -160,6 +190,16 @@ export default function ConversationDetail() {
             { backgroundColor: theme.bgSurface, borderTopColor: theme.border },
           ]}
         >
+          {chatAttachmentsEnabled && (
+            <Pressable
+              onPress={handleAttachment}
+              disabled={sending}
+              hitSlop={8}
+              style={{ paddingHorizontal: spacing.sm }}
+            >
+              <Text style={{ fontSize: 20, color: theme.textSecondary }}>📎</Text>
+            </Pressable>
+          )}
           <TextInput
             value={text}
             onChangeText={setText}
@@ -212,6 +252,13 @@ function Bubble({ msg, selfUid }: { msg: Message; selfUid: string | null }) {
           },
         ]}
       >
+        {msg.attachmentUrl && msg.attachmentType === 'image' && (
+          <Image
+            source={{ uri: msg.attachmentUrl }}
+            style={{ width: 200, height: 150, borderRadius: radius.md, marginBottom: spacing.xs }}
+            resizeMode="cover"
+          />
+        )}
         <Text style={[styles.bubbleText, { color: self ? '#0D0D0D' : theme.textPrimary }]}>
           {msg.text}
         </Text>

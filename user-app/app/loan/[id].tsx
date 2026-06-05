@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -9,13 +9,15 @@ import { useAuthStore } from '../../src/store/auth';
 import { useTheme, spacing, radius, typography } from '../../src/theme/ThemeProvider';
 import { Button } from '../../src/components/Button';
 import { Badge } from '../../src/components/Badge';
+import { ReviewModal } from '../../src/components/ReviewModal';
 import { formatMoney, formatDate } from '../../src/utils/format';
 
 export default function LoanDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { theme } = useTheme();
-  const { uid } = useAuthStore();
+  const { uid, profile } = useAuthStore();
+  const [reviewVisible, setReviewVisible] = useState(false);
 
   const { data: loan, isLoading } = useQuery({
     queryKey: ['loan', id],
@@ -144,6 +146,26 @@ export default function LoanDetail() {
                   }
                 />
               ) : null}
+            </>
+          )}
+
+          {/* Review button for completed loans */}
+          {loan.status === 'completed' && uid && (
+            <>
+              <View style={{ height: spacing.md }} />
+              <Button
+                label="Leave a Review"
+                variant="secondary"
+                fullWidth
+                onPress={() => setReviewVisible(true)}
+              />
+              <ReviewModal
+                visible={reviewVisible}
+                onClose={() => setReviewVisible(false)}
+                targetUid={loan.loanerId === uid ? (loan.borrowerId ?? '') : loan.loanerId}
+                targetName={loan.loanerId === uid ? 'Borrower' : 'Loaner'}
+                loanId={loan.id}
+              />
             </>
           )}
         </ScrollView>

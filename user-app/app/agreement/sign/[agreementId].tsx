@@ -17,6 +17,9 @@ import * as Sharing from 'expo-sharing';
 import { useTheme, spacing, radius, typography } from '../../../src/theme/ThemeProvider';
 import { Button } from '../../../src/components/Button';
 import { SignaturePad, type SignaturePadHandle } from '../../../src/components/SignaturePad';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db, storage } from '../../../src/services/firebase';
 import { useAuthStore } from '../../../src/store/auth';
 import {
   fetchAgreement,
@@ -58,8 +61,24 @@ export default function PreviewAndSign() {
     },
     onSuccess: async (party) => {
       padRef.current?.clear();
-      await refetch();
+      const freshData = await refetch();
       await qc.invalidateQueries({ queryKey: ['myLoans'] });
+
+      // Generate and upload PDF when both parties have signed
+      const fresh = freshData.data;
+      if (fresh?.loanerSignatureUrl && fresh?.borrowerSignatureUrl && Platform.OS !== 'web') {
+        try {
+          const html = buildAgreementHtml(fresh);
+          const { uri } = await Print.printToFileAsync({ html });
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          const storageRef = ref(storage, `agreements/${fresh.id}/signed.pdf`);
+          await uploadBytes(storageRef, blob);
+          const pdfUrl = await getDownloadURL(storageRef);
+          await updateDoc(doc(db, 'agreements', fresh.id), { pdfUrl });
+        } catch { /* PDF upload is best-effort */ }
+      }
+
       Alert.alert(
         'Signed',
         party === 'loaner'
