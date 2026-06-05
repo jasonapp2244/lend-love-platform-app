@@ -12,7 +12,12 @@ const NAV = [
   { href: '/kyc', label: 'KYC Queue', icon: '🛡', tiers: ['super', 'operations', 'support'] },
   { href: '/loans', label: 'Loans', icon: '$', tiers: ['super', 'operations', 'finance'] },
   { href: '/agreements', label: 'Agreements', icon: '📄', tiers: ['super', 'operations', 'finance'] },
+  { href: '/transactions', label: 'Transactions', icon: '💳', tiers: ['super', 'finance'] },
+  { href: '/moderation', label: 'Moderation', icon: '🔍', tiers: ['super', 'operations', 'support'] },
+  { href: '/tickets', label: 'Support', icon: '🎫', tiers: ['super', 'operations', 'support'] },
   { href: '/reports', label: 'Reports', icon: '◫', tiers: ['super', 'finance'] },
+  { href: '/notifications', label: 'Notifications', icon: '📢', tiers: ['super', 'operations'] },
+  { href: '/compliance', label: 'Compliance', icon: '⚖', tiers: ['super'] },
   { href: '/audit', label: 'Audit Log', icon: '✎', tiers: ['super'] },
   { href: '/config', label: 'Configuration', icon: '⚙', tiers: ['super'] },
 ];

@@ -37,6 +37,7 @@ export interface User {
   themePreference?: 'dark' | 'light' | 'system';
   fcmTokens?: string[];
   isDemo?: boolean; // true for Guest Loaner / Guest Borrower
+  suspended?: boolean; // soft-suspended by admin
   blockedUserIds?: string[];
   createdAt: number; // ms timestamp
   updatedAt: number;

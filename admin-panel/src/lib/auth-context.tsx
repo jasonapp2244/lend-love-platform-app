@@ -79,14 +79,19 @@ export function useRequireAdmin() {
  * 'super' has access to everything.
  */
 const TIER_ACCESS: Record<string, string[]> = {
-  '/dashboard':  ['super', 'operations', 'finance', 'support'],
-  '/users':      ['super', 'operations', 'support'],
-  '/kyc':        ['super', 'operations', 'support'],
-  '/loans':      ['super', 'operations', 'finance'],
-  '/agreements': ['super', 'operations', 'finance'],
-  '/reports':    ['super', 'finance'],
-  '/audit':      ['super'],
-  '/config':     ['super'],
+  '/dashboard':     ['super', 'operations', 'finance', 'support'],
+  '/users':         ['super', 'operations', 'support'],
+  '/kyc':           ['super', 'operations', 'support'],
+  '/loans':         ['super', 'operations', 'finance'],
+  '/agreements':    ['super', 'operations', 'finance'],
+  '/transactions':  ['super', 'finance'],
+  '/moderation':    ['super', 'operations', 'support'],
+  '/tickets':       ['super', 'operations', 'support'],
+  '/reports':       ['super', 'finance'],
+  '/notifications': ['super', 'operations'],
+  '/compliance':    ['super'],
+  '/audit':         ['super'],
+  '/config':        ['super'],
 };
 
 /**
