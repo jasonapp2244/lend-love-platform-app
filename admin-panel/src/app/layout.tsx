@@ -6,6 +6,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Lend Love™ Admin',
   description: 'Internal operations dashboard for Lend Love™.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

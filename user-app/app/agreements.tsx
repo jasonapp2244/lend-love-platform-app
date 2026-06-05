@@ -53,10 +53,19 @@ export default function Agreements() {
           )
         ),
       ]);
-      const merged = [
+      const all = [
         ...asLoaner.docs.map((d) => d.data() as Agreement),
         ...asBorrower.docs.map((d) => d.data() as Agreement),
-      ].sort((a, b) => b.createdAt - a.createdAt);
+      ];
+      // Deduplicate (same agreement appears in both queries when user is both parties)
+      const seen = new Set<string>();
+      const merged = all
+        .filter((a) => {
+          if (seen.has(a.id)) return false;
+          seen.add(a.id);
+          return true;
+        })
+        .sort((a, b) => b.createdAt - a.createdAt);
       setItems(merged);
       setLoading(false);
     })();

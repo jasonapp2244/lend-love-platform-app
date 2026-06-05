@@ -83,6 +83,7 @@ const TIER_ACCESS: Record<string, string[]> = {
   '/users':      ['super', 'operations', 'support'],
   '/kyc':        ['super', 'operations', 'support'],
   '/loans':      ['super', 'operations', 'finance'],
+  '/agreements': ['super', 'operations', 'finance'],
   '/reports':    ['super', 'finance'],
   '/audit':      ['super'],
   '/config':     ['super'],

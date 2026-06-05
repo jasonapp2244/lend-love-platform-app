@@ -26,7 +26,11 @@ export async function seedDemoDataForUser(uid: string, role: 'loaner' | 'borrowe
   );
   if (!existing.empty) return;
 
-  const writes = role === 'loaner' ? loanerWrites(uid) : borrowerWrites(uid);
+  const writes = [
+    ...(role === 'loaner' ? loanerWrites(uid) : borrowerWrites(uid)),
+    // Seed a KYC submission record so admin KYC queue has data
+    () => seedKycSubmission(uid),
+  ];
 
   let ok = 0;
   let failed = 0;
@@ -338,4 +342,23 @@ function addRequest(
     const ref = doc(collection(db, 'loanRequests'));
     return setDoc(ref, { id: ref.id, status: 'open', ...data, updatedAt: Date.now() });
   };
+}
+
+async function seedKycSubmission(uid: string): Promise<void> {
+  const ref = doc(collection(db, 'kycSubmissions'));
+  await setDoc(ref, {
+    id: ref.id,
+    userId: uid,
+    status: 'approved',
+    documents: {
+      idUrl: 'https://via.placeholder.com/400x250?text=Government+ID',
+      selfieUrl: 'https://via.placeholder.com/400x250?text=Selfie',
+      addressUrl: 'https://via.placeholder.com/400x250?text=Proof+of+Address',
+    },
+    confidenceScore: 0.98,
+    amlFlag: false,
+    reviewedBy: 'demo-admin',
+    reviewedAt: Date.now() - 2 * ONE_DAY,
+    createdAt: Date.now() - 3 * ONE_DAY,
+  });
 }

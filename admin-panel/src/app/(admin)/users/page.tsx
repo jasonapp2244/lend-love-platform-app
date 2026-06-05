@@ -112,9 +112,9 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((u) => (
+                filtered.map((u, idx) => (
                   <tr
-                    key={u.uid}
+                    key={`${u.uid}-${idx}`}
                     onClick={() => setSelectedUid(u.uid)}
                     className={`border-t border-border cursor-pointer transition ${
                       selectedUid === u.uid ? 'bg-primary/5' : 'hover:bg-bg-elevated'
