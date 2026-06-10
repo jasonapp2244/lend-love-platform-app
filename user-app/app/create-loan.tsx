@@ -63,6 +63,9 @@ export default function CreateLoanScreen() {
   const [replacement, setReplacement] = useState('');
   const [returnDate, setReturnDate] = useState<number>(DEFAULT_RETURN_MS);
 
+  // Validation error display
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
   const mutation = useMutation({
     mutationFn: async (input: CreateLoanInput) => {
       if (!uid) throw new Error('Not signed in');
@@ -79,6 +82,7 @@ export default function CreateLoanScreen() {
   });
 
   const handlePublish = () => {
+    setValidationErrors([]);
     // Block if platform is in read-only maintenance mode
     if (config.featureFlags['maintenance.readOnlyMode'] === true) {
       Alert.alert('Maintenance', 'The platform is temporarily in read-only mode. Please try again later.');
@@ -129,14 +133,14 @@ export default function CreateLoanScreen() {
         : CreateItemLoanSchema;
       const parsed = schema.safeParse(input);
       if (!parsed.success) {
-        Alert.alert(
-          'Check your inputs',
-          parsed.error.errors.map((e) => `• ${e.message}`).join('\n')
-        );
+        const errors = parsed.error.errors.map((e) => e.message);
+        setValidationErrors(errors);
+        Alert.alert('Check your inputs', errors.map((e) => `• ${e}`).join('\n'));
         return;
       }
       mutation.mutate(parsed.data as CreateLoanInput);
     } catch (e: any) {
+      setValidationErrors([e?.message ?? 'Unexpected error']);
       Alert.alert('Error', e?.message ?? 'Unexpected error');
     }
   };
@@ -276,7 +280,7 @@ export default function CreateLoanScreen() {
                 <View style={{ width: spacing.md }} />
                 <View style={{ flex: 1 }}>
                   <Input
-                    label="Replacement Value"
+                    label="Replacement Value *"
                     placeholder="0"
                     keyboardType="numeric"
                     value={replacement}
@@ -300,6 +304,19 @@ export default function CreateLoanScreen() {
           />
 
           <View style={{ height: spacing.xxl }} />
+
+          {validationErrors.length > 0 && (
+            <View style={[styles.errorBanner, { backgroundColor: theme.dangerTint ?? 'rgba(255,59,48,0.1)', borderColor: theme.danger ?? '#FF3B30' }]}>
+              <Text style={[typography.bodyBold, { color: theme.danger ?? '#FF3B30', marginBottom: spacing.xs }]}>
+                Please fix the following:
+              </Text>
+              {validationErrors.map((err, i) => (
+                <Text key={i} style={[typography.body, { color: theme.danger ?? '#FF3B30' }]}>
+                  • {err}
+                </Text>
+              ))}
+            </View>
+          )}
 
           <Button
             label="Publish Loan"
@@ -339,4 +356,10 @@ const styles = StyleSheet.create({
   form: { width: '100%' },
   row: { flexDirection: 'row' },
   rowGap: { height: spacing.md },
+  errorBanner: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
 });

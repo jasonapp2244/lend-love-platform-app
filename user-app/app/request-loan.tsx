@@ -38,6 +38,7 @@ export default function RequestLoanScreen() {
   const [neededByDate, setNeededByDate] = useState<number>(Date.now() + ONE_WEEK);
   const [termMonths, setTermMonths] = useState('3');
   const [collateral, setCollateral] = useState('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const mutation = useMutation({
     mutationFn: async (input: CreateLoanRequestInput) => {
@@ -53,6 +54,7 @@ export default function RequestLoanScreen() {
   });
 
   const handleSubmit = () => {
+    setValidationErrors([]);
     // Block if platform is in read-only maintenance mode
     if (config.featureFlags['maintenance.readOnlyMode'] === true) {
       Alert.alert('Maintenance', 'The platform is temporarily in read-only mode. Please try again later.');
@@ -81,10 +83,9 @@ export default function RequestLoanScreen() {
     };
     const parsed = createLoanRequestSchema(config).safeParse(input);
     if (!parsed.success) {
-      Alert.alert(
-        'Check your inputs',
-        parsed.error.errors.map((e) => `• ${e.message}`).join('\n')
-      );
+      const errors = parsed.error.errors.map((e) => e.message);
+      setValidationErrors(errors);
+      Alert.alert('Check your inputs', errors.map((e) => `• ${e}`).join('\n'));
       return;
     }
     mutation.mutate(parsed.data);
@@ -173,6 +174,19 @@ export default function RequestLoanScreen() {
           />
 
           <View style={{ height: spacing.xxl }} />
+
+          {validationErrors.length > 0 && (
+            <View style={{ borderWidth: 1, borderColor: theme.danger ?? '#FF3B30', backgroundColor: theme.dangerTint ?? 'rgba(255,59,48,0.1)', borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.lg }}>
+              <Text style={[typography.bodyBold, { color: theme.danger ?? '#FF3B30', marginBottom: spacing.xs }]}>
+                Please fix the following:
+              </Text>
+              {validationErrors.map((err, i) => (
+                <Text key={i} style={[typography.body, { color: theme.danger ?? '#FF3B30' }]}>
+                  • {err}
+                </Text>
+              ))}
+            </View>
+          )}
 
           <Button
             label="📤 Post Request"

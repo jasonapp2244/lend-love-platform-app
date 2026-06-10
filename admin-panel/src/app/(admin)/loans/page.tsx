@@ -409,14 +409,20 @@ function LoanDetail({ loan, onClose }: { loan: LoanRow | null; onClose: () => vo
                 ✓ Mark Completed
               </button>
               <button
-                onClick={() => statusMut.mutate('overdue')}
+                onClick={() => {
+                  if (!confirm('Are you sure you want to mark this loan as overdue?')) return;
+                  statusMut.mutate('overdue');
+                }}
                 disabled={loan.status === 'overdue' || statusMut.isPending}
                 className="bg-danger/10 hover:bg-danger/20 border border-danger/30 text-danger font-semibold rounded-md py-2 text-xs disabled:opacity-40"
               >
                 ⚠ Mark Overdue
               </button>
               <button
-                onClick={() => statusMut.mutate('cancelled')}
+                onClick={() => {
+                  if (!confirm('Are you sure you want to force cancel this loan? This action cannot be easily undone.')) return;
+                  statusMut.mutate('cancelled');
+                }}
                 disabled={loan.status === 'cancelled' || statusMut.isPending}
                 className="bg-bg-elevated hover:bg-bg-base border border-border text-white/80 font-semibold rounded-md py-2 text-xs disabled:opacity-40"
               >

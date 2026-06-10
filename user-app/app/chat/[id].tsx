@@ -24,7 +24,7 @@ import {
   subscribeToMessages,
   sendMessage,
   sendAttachmentMessage,
-  counterpartyName,
+  fetchCounterpartyName,
 } from '../../src/services/chat';
 import { blockUser } from '../../src/services/moderation';
 import { ReportModal } from '../../src/components/ReportModal';
@@ -44,6 +44,7 @@ export default function ConversationDetail() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+  const [headerName, setHeaderName] = useState('…');
   const listRef = useRef<FlatList<Message>>(null);
 
   const otherUserId = conv?.participantIds.find((p) => p !== uid) ?? '';
@@ -58,6 +59,12 @@ export default function ConversationDetail() {
     });
     return unsub;
   }, [id]);
+
+  // Resolve real display name for the counterparty
+  useEffect(() => {
+    if (!conv || !uid) return;
+    fetchCounterpartyName(conv.participantIds, uid).then(setHeaderName);
+  }, [conv, uid]);
 
   const handleSend = async () => {
     const t = text.trim();
@@ -106,7 +113,7 @@ export default function ConversationDetail() {
         </Text>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: theme.textPrimary }]} numberOfLines={1}>
-            {conv ? counterpartyName(conv.participantIds, uid ?? '') : '…'}
+            {headerName}
           </Text>
           {conv?.loanId ? (
             <Text style={[styles.headerSub, { color: theme.textMuted }]} numberOfLines={1}>

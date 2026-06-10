@@ -30,17 +30,19 @@ export async function audit(
   if (!adminUid) throw new Error('Not signed in');
 
   const ref = doc(collection(db(), 'adminActions'));
-  const entry: AdminAction = {
+  const ip = await fetchClientIp();
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+  const entry: Record<string, unknown> = {
     id: ref.id,
     adminId: adminUid,
     action,
     targetCollection: target.collection,
     targetId: target.id,
-    before: changes.before,
-    after: changes.after,
     timestamp: Date.now(),
-    ip: await fetchClientIp(),
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   };
+  if (changes.before !== undefined) entry.before = changes.before;
+  if (changes.after !== undefined) entry.after = changes.after;
+  if (ip !== undefined) entry.ip = ip;
+  if (userAgent !== undefined) entry.userAgent = userAgent;
   await setDoc(ref, entry);
 }
